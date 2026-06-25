@@ -3,44 +3,24 @@ import { Link, useParams } from 'react-router-dom'
 import { LoadingState } from '@/components/ui/LoadingState'
 import { ServiceDetailLayout } from '@/components/site/services/ServiceDetailLayout'
 import { usePageMeta } from '@/hooks/usePageMeta'
+import { mergeServicePage, servicePageSeo, type ServicePageOverrides } from '@/lib/servicePageMerge'
+import { resolveServiceSlug } from '@/lib/serviceSlugs'
 import { pageContentService } from '@/services/api/pageContent'
 import { SERVICE_PAGE_CONTENT_KEY } from '@/data/serviceCatalog'
-import { SERVICE_DETAIL_BY_SLUG, type ServiceDetailContent } from '@/data/serviceDetailContent'
+import { SERVICE_DETAIL_BY_SLUG } from '@/data/serviceDetailContent'
 
-function deepMergeService(base: ServiceDetailContent, partial: Partial<ServiceDetailContent>): ServiceDetailContent {
-  return {
-    ...base,
-    ...partial,
-    hero: { ...base.hero, ...(partial.hero ?? {}) },
-    problems: partial.problems?.items?.length
-      ? { ...base.problems, ...partial.problems, items: partial.problems.items }
-      : base.problems,
-    approach: { ...base.approach, ...(partial.approach ?? {}) },
-    scope: partial.scope?.items?.length
-      ? { ...base.scope, ...partial.scope, items: partial.scope.items }
-      : base.scope,
-    process: partial.process?.steps?.length
-      ? { ...base.process, ...partial.process, steps: partial.process.steps }
-      : base.process,
-    whyUs: partial.whyUs?.items?.length ? { ...base.whyUs, ...partial.whyUs, items: partial.whyUs.items } : base.whyUs,
-    technology: partial.technology?.items?.length
-      ? { ...base.technology, ...partial.technology, items: partial.technology.items }
-      : base.technology,
-    cta: { ...base.cta, ...(partial.cta ?? {}) },
-  }
-}
-
-export function normalizeServicePages(raw: unknown): Record<string, Partial<ServiceDetailContent & { enabled?: boolean }>> {
+export function normalizeServicePages(raw: unknown): Record<string, ServicePageOverrides> {
   if (!raw || typeof raw !== 'object') return {}
   const row = raw as Record<string, unknown>
   if (row.pages && typeof row.pages === 'object') {
-    return row.pages as Record<string, Partial<ServiceDetailContent & { enabled?: boolean }>>
+    return row.pages as Record<string, ServicePageOverrides>
   }
-  return row as Record<string, Partial<ServiceDetailContent & { enabled?: boolean }>>
+  return row as Record<string, ServicePageOverrides>
 }
 
 export function ServiceDetailPage() {
-  const { slug = '' } = useParams()
+  const { slug: rawSlug = '' } = useParams()
+  const slug = resolveServiceSlug(rawSlug)
   const base = SERVICE_DETAIL_BY_SLUG[slug]
 
   const { data: overrides, isLoading } = useQuery({
@@ -53,12 +33,13 @@ export function ServiceDetailPage() {
     enabled: Boolean(base),
   })
 
-  const content = base ? deepMergeService(base, overrides ?? {}) : null
+  const content = base ? mergeServicePage(base, overrides ?? {}) : null
   const disabled = overrides?.enabled === false
+  const seo = base ? servicePageSeo(base, overrides ?? {}) : { title: 'Hizmet bulunamadı', description: '' }
 
   usePageMeta({
-    title: content ? `${content.hero.title} | Woontegra` : 'Hizmet bulunamadı',
-    description: content?.hero.description,
+    title: seo.title,
+    description: seo.description,
   })
 
   if (!base) {

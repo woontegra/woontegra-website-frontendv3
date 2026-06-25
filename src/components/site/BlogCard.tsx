@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import type { PublicBlogPost } from '@/types/blog'
 
 import { formatBlogDate } from '@/types/blog'
+import { estimateReadingTimeMinutes, formatReadingTime } from '@/lib/blogReading'
 
 import { Card, CardBody } from '@/components/ui/Card'
 
@@ -23,6 +24,8 @@ type Props = {
 
 
 export function BlogCard({ post, compact = false }: Props) {
+  const readingMinutes = estimateReadingTimeMinutes(post.bodyHtml || post.excerpt)
+
   return (
 
     <Card className="group flex h-full flex-col overflow-hidden border-slate-200/80 transition hover:border-brand-200 hover:shadow-lg">
@@ -48,6 +51,8 @@ export function BlogCard({ post, compact = false }: Props) {
           {post.category ? <Badge>{post.category.name}</Badge> : null}
 
           <span className="text-xs text-slate-500">{formatBlogDate(post.publishedAt || post.createdAt)}</span>
+          <span className="text-xs text-slate-400">·</span>
+          <span className="text-xs text-slate-500">{formatReadingTime(readingMinutes)}</span>
 
         </div>
 

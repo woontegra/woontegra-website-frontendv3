@@ -361,6 +361,26 @@ function mergeAbout(base: AboutPageContent, partial: Partial<AboutPageContent>):
   }
 }
 
+function applyBuilderSections(row: Record<string, unknown>, base: AboutPageContent): AboutPageContent {
+  const next = structuredClone(base)
+  const sections = row.sections
+  if (!Array.isArray(sections)) return next
+
+  for (const section of sections) {
+    if (!section || typeof section !== 'object') continue
+    const s = section as Record<string, unknown>
+    const data = s.data
+    if (s.type !== 'hero' || !data || typeof data !== 'object') continue
+    const d = data as Record<string, unknown>
+    if (toStr(d.tag)) next.hero.eyebrow = toStr(d.tag)
+    if (toStr(d.title)) next.hero.title = toStr(d.title)
+    if (toStr(d.subtitle)) next.hero.subtitle = toStr(d.subtitle)
+    if (toStr(d.image)) next.hero.image = toStr(d.image)
+  }
+
+  return next
+}
+
 function applyLegacyFlat(row: Record<string, unknown>, base: AboutPageContent): AboutPageContent {
   const next = structuredClone(base)
   if (toStr(row.heroTitle)) {
@@ -414,53 +434,56 @@ export function normalizeAboutContent(raw: unknown): AboutPageContent {
   if (!raw || typeof raw !== 'object') return base
   const row = raw as Record<string, unknown>
 
+  const fromBuilder = applyBuilderSections(row, base)
+
   if (toNum(row.version, 0) >= ABOUT_PAGE_VERSION && row.hero && typeof row.hero === 'object') {
     const partial = row as unknown as Partial<AboutPageContent>
-    return mergeAbout(base, {
+    return mergeAbout(fromBuilder, {
       ...partial,
       version: ABOUT_PAGE_VERSION,
       hero: {
-        ...base.hero,
+        ...fromBuilder.hero,
         ...(partial.hero ?? {}),
-        highlights: sortByOrder((partial.hero?.highlights ?? base.hero.highlights).map((c, i) => normalizeHighlight(c, i)).filter(Boolean) as AboutHighlightCard[]),
+        image: toStr(partial.hero?.image, fromBuilder.hero.image) || fromBuilder.hero.image,
+        highlights: sortByOrder((partial.hero?.highlights ?? fromBuilder.hero.highlights).map((c, i) => normalizeHighlight(c, i)).filter(Boolean) as AboutHighlightCard[]),
       },
       whatIs: {
-        ...base.whatIs,
+        ...fromBuilder.whatIs,
         ...(partial.whatIs ?? {}),
-        cards: sortByOrder((partial.whatIs?.cards ?? base.whatIs.cards).map((c, i) => normalizeSimpleCard(c, i)).filter(Boolean) as AboutSimpleCard[]),
+        cards: sortByOrder((partial.whatIs?.cards ?? fromBuilder.whatIs.cards).map((c, i) => normalizeSimpleCard(c, i)).filter(Boolean) as AboutSimpleCard[]),
       },
       timeline: {
-        ...base.timeline,
+        ...fromBuilder.timeline,
         ...(partial.timeline ?? {}),
-        steps: sortByOrder((partial.timeline?.steps ?? base.timeline.steps).map((s, i) => normalizeTimelineStep(s, i)).filter(Boolean) as AboutTimelineStep[]),
+        steps: sortByOrder((partial.timeline?.steps ?? fromBuilder.timeline.steps).map((s, i) => normalizeTimelineStep(s, i)).filter(Boolean) as AboutTimelineStep[]),
       },
       differentiators: {
-        ...base.differentiators,
+        ...fromBuilder.differentiators,
         ...(partial.differentiators ?? {}),
-        cards: sortByOrder((partial.differentiators?.cards ?? base.differentiators.cards).map((c, i) => normalizeIconCard(c, i)).filter(Boolean) as AboutIconCard[]),
+        cards: sortByOrder((partial.differentiators?.cards ?? fromBuilder.differentiators.cards).map((c, i) => normalizeIconCard(c, i)).filter(Boolean) as AboutIconCard[]),
       },
       brands: {
-        ...base.brands,
+        ...fromBuilder.brands,
         ...(partial.brands ?? {}),
-        cards: sortByOrder((partial.brands?.cards ?? base.brands.cards).map((c, i) => normalizeBrand(c, i)).filter(Boolean) as AboutBrandCard[]),
+        cards: sortByOrder((partial.brands?.cards ?? fromBuilder.brands.cards).map((c, i) => normalizeBrand(c, i)).filter(Boolean) as AboutBrandCard[]),
       },
       workApproach: {
-        ...base.workApproach,
+        ...fromBuilder.workApproach,
         ...(partial.workApproach ?? {}),
-        cards: sortByOrder((partial.workApproach?.cards ?? base.workApproach.cards).map((c, i) => normalizeIconCard(c, i)).filter(Boolean) as AboutIconCard[]),
+        cards: sortByOrder((partial.workApproach?.cards ?? fromBuilder.workApproach.cards).map((c, i) => normalizeIconCard(c, i)).filter(Boolean) as AboutIconCard[]),
       },
       structure: {
-        ...base.structure,
+        ...fromBuilder.structure,
         ...(partial.structure ?? {}),
-        stats: sortByOrder((partial.structure?.stats ?? base.structure.stats).map((c, i) => normalizeStat(c, i)).filter(Boolean) as AboutStatCard[]),
+        stats: sortByOrder((partial.structure?.stats ?? fromBuilder.structure.stats).map((c, i) => normalizeStat(c, i)).filter(Boolean) as AboutStatCard[]),
       },
-      vision: { ...base.vision, ...(partial.vision ?? {}) },
-      cta: { ...base.cta, ...(partial.cta ?? {}) },
-      metaDescription: toStr(partial.metaDescription, base.metaDescription),
+      vision: { ...fromBuilder.vision, ...(partial.vision ?? {}) },
+      cta: { ...fromBuilder.cta, ...(partial.cta ?? {}) },
+      metaDescription: toStr(partial.metaDescription, fromBuilder.metaDescription),
     })
   }
 
-  return applyLegacyFlat(row, base)
+  return applyLegacyFlat(row, fromBuilder)
 }
 
 function toNum(v: unknown, fb: number): number {

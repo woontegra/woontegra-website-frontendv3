@@ -10,6 +10,7 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { Table, TBody, TD, TH, THead, TR } from '@/components/ui/Table'
 import { adminBlogService, getErrorMessage } from '@/services/api/adminBlog'
 import { formatBlogDate } from '@/types/blog'
+import { resolveMediaUrl } from '@/utils/mediaUrl'
 
 function formatDateTime(value: string): string {
   if (!value) return '—'
@@ -85,6 +86,7 @@ export function AdminBlogListPage() {
           <Table>
             <THead>
               <TR>
+                <TH className="w-24">Kapak</TH>
                 <TH>Başlık</TH>
                 <TH>Slug</TH>
                 <TH>Durum</TH>
@@ -96,6 +98,20 @@ export function AdminBlogListPage() {
             <TBody>
               {data.map((post) => (
                 <TR key={post.id}>
+                  <TD>
+                    {post.featuredImage ? (
+                      <img
+                        src={resolveMediaUrl(post.featuredImage)}
+                        alt=""
+                        className="h-12 w-20 rounded border border-slate-200 object-cover"
+                        onError={(e) => {
+                          e.currentTarget.src = '/product-placeholder.svg'
+                        }}
+                      />
+                    ) : (
+                      <span className="text-xs text-slate-400">—</span>
+                    )}
+                  </TD>
                   <TD className="font-medium text-slate-900">{post.title}</TD>
                   <TD className="font-mono text-xs text-slate-500">{post.slug}</TD>
                   <TD>

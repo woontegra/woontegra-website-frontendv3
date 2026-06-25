@@ -62,7 +62,7 @@ export const softwareDevelopmentDetail: ServiceDetailContent = {
     title: 'İşletmenize Özel Yazılım Sistemleri Geliştiriyoruz',
     description:
       'Hazır çözümlerin yetmediği süreçlerde, işletmenize özel yönetim panelleri, e-ticaret altyapıları, CRM sistemleri ve operasyon yazılımları geliştiriyoruz.',
-    image: '/images/yazilim.png',
+    image: '/images/yazilim-hero.png',
     imageAlt: 'Woontegra yazılım geliştirme dashboard',
     primaryCta: { text: 'Teklif Al', to: '/teklif-al' },
     secondaryCta: { text: 'İletişime Geç', to: '/iletisim' },
@@ -208,7 +208,7 @@ export const webDesignDetail: ServiceDetailContent = {
     title: 'Dönüşüm Odaklı Kurumsal Web Siteleri Tasarlıyoruz',
     description:
       'Sadece estetik değil; hız, güven ve dönüşüm odaklı kurumsal web siteleri ile markanızı dijitalde güçlendiriyoruz.',
-    image: '/images/web-tasarim.png',
+    image: '/images/web-tasarim-hero.png',
     imageAlt: 'Woontegra web tasarım örneği',
     primaryCta: { text: 'Teklif Al', to: '/teklif-al' },
     secondaryCta: { text: 'İletişime Geç', to: '/iletisim' },
@@ -370,7 +370,7 @@ export const saasProductDetail: ServiceDetailContent = {
     title: 'Ölçeklenebilir SaaS Ürünleri Geliştiriyoruz',
     description:
       'Abonelik modeliyle çalışan, çok kiracılı ve büyümeye hazır yazılım ürünleri tasarlıyor ve hayata geçiriyoruz.',
-    image: '/images/saas-dashboard.jpg',
+    image: '/images/saas-hero.png',
     imageAlt: 'Woontegra SaaS dashboard',
     primaryCta: { text: 'Teklif Al', to: '/teklif-al' },
     secondaryCta: { text: 'İletişime Geç', to: '/iletisim' },
@@ -451,7 +451,7 @@ export const trademarkPatentDetail: ServiceDetailContent = {
     title: 'Markanızı ve Fikri Mülkiyetinizi Koruyoruz',
     description:
       'Marka tescil, patent başvurusu ve fikri mülkiyet süreçlerinde uçtan uca danışmanlık ve vekillik hizmeti sunuyoruz.',
-    image: '/images/marka-patent-belge.jpg',
+    image: '/images/hero-dashboard.jpg',
     imageAlt: 'Marka ve patent belgeleri',
     primaryCta: { text: 'Teklif Al', to: '/teklif-al' },
     secondaryCta: { text: 'İletişime Geç', to: '/iletisim' },
@@ -532,7 +532,7 @@ export const gameDevelopmentDetail: ServiceDetailContent = {
     title: 'Mobil ve Web Oyunları Geliştiriyoruz',
     description:
       'Fikirden yayına, oyun tasarımı, geliştirme ve yayın süreçlerinde uçtan uca oyun geliştirme hizmeti sunuyoruz.',
-    image: '/images/oyun-sahne.jpg',
+    image: '/images/hero-dashboard.jpg',
     imageAlt: 'Woontegra oyun geliştirme',
     primaryCta: { text: 'Teklif Al', to: '/teklif-al' },
     secondaryCta: { text: 'İletişime Geç', to: '/iletisim' },
@@ -613,7 +613,7 @@ export const digitalConsultingDetail: ServiceDetailContent = {
     title: 'Dijital Dönüşüm ve Teknoloji Stratejisi Danışmanlığı',
     description:
       'İşletmenizin dijital olgunluğunu artırmak, süreçleri optimize etmek ve doğru teknoloji yatırımlarını planlamak için stratejik danışmanlık sunuyoruz.',
-    image: '/images/dijital-danismanlik.jpg',
+    image: '/images/danismanlik-hero.png',
     imageAlt: 'Woontegra dijital danışmanlık',
     primaryCta: { text: 'Teklif Al', to: '/teklif-al' },
     secondaryCta: { text: 'İletişime Geç', to: '/iletisim' },

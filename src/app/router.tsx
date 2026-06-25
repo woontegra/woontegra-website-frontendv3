@@ -76,6 +76,8 @@ import { FaqPage } from '@/pages/site/FaqPage'
 import { QuotePage } from '@/pages/site/QuotePage'
 import { UcretsizAraclarPage } from '@/pages/site/UcretsizAraclarPage'
 import { ServiceDetailPage } from '@/pages/site/ServiceDetailPage'
+import { SERVICE_CATALOG } from '@/data/serviceCatalog'
+import { SERVICE_SLUG_ALIASES } from '@/lib/serviceSlugs'
 import { CategoryPage } from '@/pages/site/CategoryPage'
 import { SolutionDetailPage } from '@/pages/site/SolutionDetailPage'
 import { SifreKasasiPage } from '@/pages/site/SifreKasasiPage'
@@ -116,6 +118,8 @@ export const router = createBrowserRouter([
       { path: 'hakkimizda', element: <AboutPage /> },
       { path: 'iletisim', element: <ContactPage /> },
       { path: 'hizmetler', element: <ServicesPage /> },
+      { path: 'hizmetler/e-ticaret-cozumleri', element: <Navigate to="/hizmetler/e-ticaret" replace /> },
+      { path: 'hizmetler/saas-urun-gelistirme', element: <Navigate to="/hizmetler/saas" replace /> },
       { path: 'hizmetler/:slug', element: <ServiceDetailPage /> },
       { path: 'cozumler', element: <SolutionsPage /> },
       { path: 'cozumler/:slug', element: <SolutionDetailPage /> },
@@ -140,6 +144,14 @@ export const router = createBrowserRouter([
       { path: 'yasal-belge/:type', element: <LegalTypeDocumentPage /> },
       { path: 'urunler', element: <Navigate to="/yazilimlar" replace /> },
       { path: 'urun/:slug', element: <LegacyProductRedirect /> },
+      ...SERVICE_CATALOG.map((service) => ({
+        path: service.slug,
+        element: <Navigate to={service.path} replace />,
+      })),
+      ...Object.entries(SERVICE_SLUG_ALIASES).map(([alias, target]) => ({
+        path: alias,
+        element: <Navigate to={`/hizmetler/${target}`} replace />,
+      })),
       { path: ':slug', element: <DynamicCmsPage /> },
     ],
   },

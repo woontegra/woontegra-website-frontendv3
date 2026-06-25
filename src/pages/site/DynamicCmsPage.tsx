@@ -9,6 +9,7 @@ import { PageHero } from '@/components/site/PageHero'
 import { usePageMeta } from '@/hooks/usePageMeta'
 
 import { isReservedCmsSlug } from '@/lib/cmsReservedSlugs'
+import { canonicalServicePath, isKnownServiceSlug } from '@/lib/serviceSlugs'
 
 import { cmsPagesPublicService, type PublicCmsPage } from '@/services/api/cmsPagesPublic'
 
@@ -29,6 +30,7 @@ export function DynamicCmsPage({ slugOverride }: Props = {}) {
   const slug = slugOverride ?? params.slug ?? ''
 
   const reserved = isReservedCmsSlug(slug)
+  const serviceSlug = slug.trim().toLowerCase()
 
   const [page, setPage] = useState<PublicCmsPage | null>(null)
 
@@ -40,7 +42,7 @@ export function DynamicCmsPage({ slugOverride }: Props = {}) {
 
   useEffect(() => {
 
-    if (!slug || reserved) {
+    if (!slug || reserved || isKnownServiceSlug(serviceSlug)) {
 
       setLoading(false)
 
@@ -68,7 +70,7 @@ export function DynamicCmsPage({ slugOverride }: Props = {}) {
 
       .finally(() => setLoading(false))
 
-  }, [slug, reserved])
+  }, [slug, reserved, serviceSlug])
 
 
 
@@ -81,6 +83,10 @@ export function DynamicCmsPage({ slugOverride }: Props = {}) {
   })
 
 
+
+  if (isKnownServiceSlug(serviceSlug)) {
+    return <Navigate to={canonicalServicePath(serviceSlug)} replace />
+  }
 
   if (reserved) {
 

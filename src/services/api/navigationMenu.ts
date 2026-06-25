@@ -4,6 +4,7 @@ import type {
   AdminNavigationMenuItem,
   PublicNavigationMenuItem,
 } from '@/types/navigationMenu'
+import { remapLegacyServiceUrl } from '@/lib/serviceSlugs'
 import { adminApi, publicApi } from '@/services/api/client'
 
 function unwrap<T>(payload: unknown): T {
@@ -16,7 +17,7 @@ function unwrap<T>(payload: unknown): T {
 export function mapPublicNavUrl(url: string): string {
   if (!url || url === '#') return url
   if (url.startsWith('/urun/')) return url.replace(/^\/urun\//, '/yazilimlar/')
-  return url
+  return remapLegacyServiceUrl(url)
 }
 
 function mapPublicItem(item: PublicNavigationMenuItem): PublicNavigationMenuItem {

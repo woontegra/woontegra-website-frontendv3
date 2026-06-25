@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Pencil, Trash2 } from 'lucide-react'
+import { Menu, Pencil, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Card, CardBody } from '@/components/ui/Card'
 import { EmptyState } from '@/components/ui/EmptyState'
@@ -11,8 +12,28 @@ import { Table, TBody, TD, TH, THead, TR } from '@/components/ui/Table'
 import { getErrorMessage } from '@/services/api/client'
 import { productCategoriesService, type ProductCategoryInput } from '@/services/api/productCategories'
 import { slugifySoftwareName } from '@/types/product'
+import { buildMenuQuickLink } from '@/lib/cmsQuickLinks'
+import { categoryPublicPath } from '@/lib/menuSourceUrls'
 
 const empty: ProductCategoryInput = { name: '', slug: '', description: '', parentId: null, isActive: true, sortOrder: 0 }
+
+const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
+
+function validateCategoryForm(form: ProductCategoryInput): string | null {
+  const name = form.name.trim()
+  const slugInput = form.slug?.trim() ?? ''
+
+  if (!name) {
+    if (slugInput) return 'Kategori adı zorunludur. Yalnızca slug ile kayıt yapılamaz.'
+    return 'Kategori adı zorunludur.'
+  }
+  if (name.length < 2) return 'Kategori adı en az 2 karakter olmalıdır.'
+
+  const slug = (slugInput || slugifySoftwareName(name)).toLowerCase()
+  if (!slug) return 'Geçerli bir slug gerekli.'
+  if (!SLUG_PATTERN.test(slug)) return 'Slug yalnızca küçük harf, rakam ve tire içerebilir.'
+  return null
+}
 
 export function AdminProductCategoriesPage() {
   const queryClient = useQueryClient()
@@ -20,6 +41,7 @@ export function AdminProductCategoriesPage() {
   const [form, setForm] = useState<ProductCategoryInput>(empty)
   const [slugManual, setSlugManual] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [nameError, setNameError] = useState<string | null>(null)
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['admin', 'product-categories'],
@@ -33,8 +55,13 @@ export function AdminProductCategoriesPage() {
 
   const saveMutation = useMutation({
     mutationFn: async () => {
-      if (!form.name.trim()) throw new Error('Kategori adı gerekli')
-      const payload = { ...form, name: form.name.trim(), slug: form.slug?.trim() || slugifySoftwareName(form.name) }
+      const validationError = validateCategoryForm(form)
+      if (validationError) throw new Error(validationError)
+      const payload = {
+        ...form,
+        name: form.name.trim(),
+        slug: (form.slug?.trim() || slugifySoftwareName(form.name)).toLowerCase(),
+      }
       if (editingId) return productCategoriesService.update(editingId, payload)
       return productCategoriesService.create(payload)
     },
@@ -42,10 +69,31 @@ export function AdminProductCategoriesPage() {
       setEditingId(null)
       setForm(empty)
       setSlugManual(false)
+      setError(null)
+      setNameError(null)
       void queryClient.invalidateQueries({ queryKey: ['admin', 'product-categories'] })
     },
     onError: (err) => setError(getErrorMessage(err)),
   })
+
+  const sortedCategories = useMemo(
+    () => (data ?? []).slice().sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name, 'tr')),
+    [data],
+  )
+
+  const slugPreview = slugifySoftwareName(form.name)
+
+  const handleSave = () => {
+    const validationError = validateCategoryForm(form)
+    if (validationError) {
+      setError(validationError)
+      setNameError(!form.name.trim() ? validationError : null)
+      return
+    }
+    setError(null)
+    setNameError(null)
+    void saveMutation.mutateAsync()
+  }
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => productCategoriesService.remove(id),
@@ -54,22 +102,44 @@ export function AdminProductCategoriesPage() {
 
   return (
     <div className="w-full min-w-0 space-y-6">
-      <PageHeader title="Kategoriler" description="Ürün kategorileri." />
+      <PageHeader
+        title="Kategoriler"
+        description="Ürün kategorilerini yönetin. Kategori oluşturmak menüye otomatik eklemez — üst menüye koymak için Menü Yönetimi kullanın."
+      />
 
       <Card>
         <CardBody className="space-y-4">
           <h2 className="text-sm font-semibold text-slate-800">{editingId ? 'Kategori düzenle' : 'Yeni kategori'}</h2>
           {error ? <p className="text-sm text-red-600">{error}</p> : null}
           <div className="grid gap-3 sm:grid-cols-2">
-            <Input label="Ad" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
             <Input
-              label="Slug"
-              value={form.slug ?? ''}
+              label="Ad"
+              required
+              value={form.name}
+              error={nameError ?? undefined}
               onChange={(e) => {
-                setSlugManual(true)
-                setForm((f) => ({ ...f, slug: e.target.value }))
+                setNameError(null)
+                setError(null)
+                setForm((f) => ({ ...f, name: e.target.value }))
               }}
             />
+            <div className="space-y-1.5">
+              <Input
+                label="Slug"
+                value={form.slug ?? ''}
+                onChange={(e) => {
+                  setSlugManual(true)
+                  setError(null)
+                  setForm((f) => ({ ...f, slug: e.target.value.toLowerCase() }))
+                }}
+              />
+              {form.name.trim() && !slugManual ? (
+                <p className="text-xs text-slate-500">
+                  Otomatik: <span className="font-mono">{slugPreview || '—'}</span>
+                  {slugPreview === 'yazilimlar' ? ' (ör. Yazılımlar → yazilimlar)' : null}
+                </p>
+              ) : null}
+            </div>
           </div>
           <Input
             label="Açıklama"
@@ -93,8 +163,8 @@ export function AdminProductCategoriesPage() {
             />
           </div>
           <div className="flex gap-2">
-            <Button onClick={() => void saveMutation.mutateAsync()} disabled={saveMutation.isPending}>
-              {editingId ? 'Güncelle' : 'Ekle'}
+            <Button onClick={handleSave} disabled={saveMutation.isPending}>
+              {editingId ? 'Güncelle' : 'Kaydet'}
             </Button>
             {editingId ? (
               <Button
@@ -102,6 +172,9 @@ export function AdminProductCategoriesPage() {
                 onClick={() => {
                   setEditingId(null)
                   setForm(empty)
+                  setSlugManual(false)
+                  setError(null)
+                  setNameError(null)
                 }}
               >
                 İptal
@@ -114,7 +187,7 @@ export function AdminProductCategoriesPage() {
       {isLoading ? <LoadingState label="Kategoriler yükleniyor…" /> : null}
       {isError ? <EmptyState title="Yüklenemedi" description="Kategori listesi alınamadı." /> : null}
 
-      {data && data.length > 0 ? (
+      {sortedCategories.length > 0 ? (
         <Table>
           <THead>
             <TR>
@@ -126,7 +199,7 @@ export function AdminProductCategoriesPage() {
             </TR>
           </THead>
           <TBody>
-            {data.map((c) => (
+            {sortedCategories.map((c) => (
               <TR key={c.id}>
                 <TD className="font-medium">{c.name}</TD>
                 <TD className="font-mono text-xs text-slate-500">{c.slug}</TD>
@@ -134,6 +207,17 @@ export function AdminProductCategoriesPage() {
                 <TD>{c.isActive ? 'Aktif' : 'Pasif'}</TD>
                 <TD>
                   <div className="flex justify-end gap-2">
+                    <Link
+                      to={buildMenuQuickLink({
+                        categoryId: c.id,
+                        label: c.name,
+                        path: categoryPublicPath(c.slug),
+                      })}
+                      className="inline-flex h-8 items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                    >
+                      <Menu className="h-3.5 w-3.5" />
+                      Menüye ekle
+                    </Link>
                     <Button
                       variant="secondary"
                       size="sm"

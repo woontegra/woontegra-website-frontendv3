@@ -118,6 +118,27 @@ export function ServiceDetailLayout({ content, serviceLabel }: Props) {
             <h2 className="text-3xl font-bold tracking-tight text-slate-900 md:text-4xl">{content.process.title}</h2>
             <p className="mt-4 text-base text-slate-600">{content.process.subtitle}</p>
           </div>
+          <div className="mt-12 hidden lg:block">
+            <div className="relative space-y-10">
+              <div className="absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-gradient-to-b from-emerald-300 via-emerald-500 to-emerald-300" />
+              {content.process.steps.map((step, index) => (
+                <div
+                  key={step.step}
+                  className={`relative flex items-center ${index % 2 === 0 ? 'flex-row' : 'flex-row-reverse'}`}
+                >
+                  <div className={`w-1/2 ${index % 2 === 0 ? 'pr-10 text-right' : 'pl-10'}`}>
+                    <div className="inline-block max-w-md rounded-2xl border border-slate-200 bg-white p-6 text-left shadow-sm">
+                      <span className="text-sm font-bold text-emerald-600">{step.step}</span>
+                      <h3 className="mt-2 text-lg font-bold text-slate-900">{step.title}</h3>
+                      <p className="mt-2 text-sm leading-relaxed text-slate-600">{step.description}</p>
+                    </div>
+                  </div>
+                  <div className="absolute left-1/2 h-4 w-4 -translate-x-1/2 rounded-full border-4 border-white bg-emerald-500 shadow" />
+                  <div className="w-1/2" />
+                </div>
+              ))}
+            </div>
+          </div>
           <div className="mt-8 space-y-4 lg:hidden">
             {content.process.steps.map((step) => (
               <div key={step.step} className="flex gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">

@@ -51,7 +51,6 @@ export const DEFAULT_HEADER_NAV: HeaderNavItem[] = [
   { id: 'about', label: 'Hakkımızda', href: '/hakkimizda' },
   { id: 'services', label: 'Hizmetler', href: '/hizmetler', children: SERVICES_NAV_CHILDREN },
   { id: 'solutions', label: 'Çözümler', href: '/cozumler' },
-  { id: 'software', label: 'Yazılımlar', href: '/yazilimlar', children: SOFTWARE_NAV_CHILDREN },
   { id: 'blog', label: 'Blog', href: '/blog' },
   { id: 'contact', label: 'İletişim', href: '/iletisim' },
 ]

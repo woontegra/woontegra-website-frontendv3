@@ -6,7 +6,7 @@ import {
 } from '@/lib/headerNavigation'
 import type { AdminNavigationMenuItem, PublicNavigationMenuItem } from '@/types/navigationMenu'
 
-export const MIN_MEANINGFUL_TOP_LEVEL_NAV = 3
+export const MIN_MEANINGFUL_TOP_LEVEL_NAV = 1
 
 export type HeaderNavSource = 'default' | 'database'
 

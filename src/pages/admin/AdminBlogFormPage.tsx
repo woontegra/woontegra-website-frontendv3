@@ -1,17 +1,17 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { ArrowLeft, Save } from 'lucide-react'
+import { ArrowLeft, ExternalLink, Save } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Card, CardBody } from '@/components/ui/Card'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Input } from '@/components/ui/Input'
 import { LoadingState } from '@/components/ui/LoadingState'
 import { PageHeader } from '@/components/ui/PageHeader'
+import { ManagedImageField } from '@/components/admin/ManagedImageField'
 import { adminBlogService, getErrorMessage } from '@/services/api/adminBlog'
 import type { AdminBlogPostInput } from '@/types/blog'
 import { slugifyBlogTitle } from '@/types/blog'
-import { resolveMediaUrl } from '@/utils/mediaUrl'
 
 const emptyForm: AdminBlogPostInput = {
   title: '',
@@ -106,8 +106,6 @@ export function AdminBlogFormPage() {
     })
   }
 
-  const coverPreview = form.featuredImage?.trim() ? resolveMediaUrl(form.featuredImage) : null
-
   if (!isNew && isLoading) return <LoadingState label="Yazı yükleniyor…" />
   if (!isNew && isError) return <EmptyState title="Yazı bulunamadı" description="Kayıt yüklenemedi." />
 
@@ -156,34 +154,44 @@ export function AdminBlogFormPage() {
               />
             </div>
             <TextArea label="Özet" value={form.excerpt ?? ''} onChange={(v) => update('excerpt', v)} rows={3} />
-            <TextArea
-              label="İçerik"
-              value={form.bodyHtml ?? ''}
-              onChange={(v) => update('bodyHtml', v)}
-              rows={12}
-              placeholder="HTML veya düz metin yazabilirsiniz."
-            />
+            <div className="space-y-1.5">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <label className="block text-sm font-medium text-slate-700">İçerik</label>
+                {form.slug?.trim() ? (
+                  <a
+                    href={`/blog/${form.slug.trim()}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-700 hover:text-brand-800"
+                  >
+                    Canlı sayfayı aç
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  </a>
+                ) : null}
+              </div>
+              <textarea
+                value={form.bodyHtml ?? ''}
+                onChange={(e) => update('bodyHtml', e.target.value)}
+                rows={16}
+                placeholder="HTML veya düz metin yazabilirsiniz."
+                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 font-mono text-sm leading-relaxed text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+              />
+              <p className="text-xs text-slate-500">Public blog sayfasında HTML içerik tipografi ile render edilir.</p>
+            </div>
           </CardBody>
         </Card>
 
         <Card>
-          <CardBody className="space-y-4">
-            <Input
-              label="Kapak görsel URL"
+          <CardBody>
+            <ManagedImageField
+              label="Kapak görseli"
+              hint="Blog listesi ve blog detay sayfasında gösterilir. Görseli medya kütüphanesinden seçebilir veya yeni dosya yükleyebilirsiniz."
               value={form.featuredImage ?? ''}
-              onChange={(e) => update('featuredImage', e.target.value)}
-              placeholder="/uploads/... veya https://..."
+              onChange={(url) => update('featuredImage', url)}
+              previewVariant="wide"
+              allowDirectUpload
+              manualUrlCollapsible
             />
-            {coverPreview ? (
-              <img
-                src={coverPreview}
-                alt="Önizleme"
-                className="aspect-[16/9] w-full max-w-md rounded-xl border border-slate-200 object-cover"
-                onError={(e) => {
-                  e.currentTarget.src = '/product-placeholder.svg'
-                }}
-              />
-            ) : null}
           </CardBody>
         </Card>
 

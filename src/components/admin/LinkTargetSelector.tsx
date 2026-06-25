@@ -3,6 +3,14 @@ import { adminBlogService } from '@/services/api/adminBlog'
 import { adminProductsService } from '@/services/api/adminProducts'
 import { cmsPagesService } from '@/services/api/cmsPages'
 import { productCategoriesService } from '@/services/api/productCategories'
+import {
+  blogPostPublicPath,
+  categoryPublicPath,
+  cmsPagePublicPath,
+  productPublicPath,
+  servicePublicPath,
+  solutionPublicPath,
+} from '@/lib/menuSourceUrls'
 import { SITE_PAGE_DEFINITIONS } from '@/data/sitePages'
 import { SERVICE_CATALOG } from '@/data/serviceCatalog'
 import { SOLUTION_CATALOG } from '@/data/solutionCatalog'
@@ -54,9 +62,9 @@ export function resolveLinkTargetHref(value: LinkTargetValue): { href?: string; 
     case 'software-list':
       return { href: '/yazilimlar' }
     case 'service':
-      return { href: value.serviceSlug ? `/hizmetler/${value.serviceSlug}` : '/hizmetler' }
+      return { href: value.serviceSlug ? servicePublicPath(value.serviceSlug) : '/hizmetler' }
     case 'solution':
-      return { href: value.solutionSlug ? `/cozumler/${value.solutionSlug}` : '/cozumler' }
+      return { href: value.solutionSlug ? solutionPublicPath(value.solutionSlug) : '/cozumler' }
     case 'cookie-preferences':
       return { action: 'cookie-preferences' }
     case 'site-page': {
@@ -70,7 +78,7 @@ export function resolveLinkTargetHref(value: LinkTargetValue): { href?: string; 
     case 'category':
       return { href: value.url?.trim() || '/' }
     case 'blog-post':
-      return { href: value.blogPostSlug ? `/blog/${value.blogPostSlug}` : '/blog' }
+      return { href: value.blogPostSlug ? blogPostPublicPath(value.blogPostSlug) : '/blog' }
     case 'external-url':
     case 'custom-url':
       return { href: value.url?.trim() || '/' }
@@ -113,16 +121,16 @@ export function LinkTargetSelector({ value, onChange, allowCookiePreferences = f
   useEffect(() => {
     void Promise.all([
       adminProductsService.list({ isActive: 'all' }).then((rows) =>
-        setProducts(rows.map((p) => ({ value: p.id, label: p.name, meta: `/yazilimlar/${p.slug}` }))),
+        setProducts(rows.map((p) => ({ value: p.id, label: p.name, meta: productPublicPath(p.slug) }))),
       ),
       productCategoriesService.list().then((rows) =>
-        setCategories(rows.map((c) => ({ value: c.id, label: c.name, meta: c.slug }))),
+        setCategories(rows.map((c) => ({ value: c.id, label: c.name, meta: categoryPublicPath(c.slug) }))),
       ),
       cmsPagesService.list().then((rows) =>
-        setCmsPages(rows.map((p) => ({ value: p.id, label: p.title, meta: `/${p.slug}` }))),
+        setCmsPages(rows.map((p) => ({ value: p.id, label: p.title, meta: cmsPagePublicPath(p.slug) }))),
       ),
       adminBlogService.list().then((rows) =>
-        setBlogPosts(rows.map((p) => ({ value: p.slug, label: p.title, meta: `/blog/${p.slug}` }))),
+        setBlogPosts(rows.map((p) => ({ value: p.slug, label: p.title, meta: blogPostPublicPath(p.slug) }))),
       ),
     ]).catch(() => undefined)
   }, [])
@@ -255,7 +263,7 @@ export function LinkTargetSelector({ value, onChange, allowCookiePreferences = f
           value={value.categoryId ?? ''}
           onChange={(e) => {
             const opt = categories.find((c) => c.value === e.target.value)
-            onChange({ ...value, categoryId: e.target.value, url: opt?.meta ? `/kategori/${opt.meta}` : '/yazilimlar' })
+            onChange({ ...value, categoryId: e.target.value, url: opt?.meta ?? '/' })
           }}
         >
           <option value="">Kategori seçin</option>
