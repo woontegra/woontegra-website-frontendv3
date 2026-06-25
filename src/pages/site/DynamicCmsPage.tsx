@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 
 import { Link, Navigate, useParams } from 'react-router-dom'
 
-import { LoadingState } from '@/components/ui/LoadingState'
+import { PageHeroSkeleton, ArticleContentSkeleton } from '@/components/ui/PageSkeletons'
 
 import { PageHero } from '@/components/site/PageHero'
 
@@ -97,17 +97,12 @@ export function DynamicCmsPage({ slugOverride }: Props = {}) {
 
 
   if (loading) {
-
     return (
-
-      <div className="py-20">
-
-        <LoadingState label="Sayfa yükleniyor…" />
-
+      <div>
+        <PageHeroSkeleton />
+        <ArticleContentSkeleton />
       </div>
-
     )
-
   }
 
 

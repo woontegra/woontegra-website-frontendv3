@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { LoadingState } from '@/components/ui/LoadingState'
 import { usePageMeta } from '@/hooks/usePageMeta'
+import { publicQueryOptions } from '@/lib/publicQueryOptions'
 import { legalDocumentsService } from '@/services/api/legalDocuments'
 import { resolveLegalDocumentHtml } from '@/data/legalDocumentApiFallbacks'
 import { LEGAL_CHECKOUT_DOC } from '@/types/legalDocuments'
@@ -14,9 +14,10 @@ type Props = {
 export function LegalCheckoutDocumentPage({ slug }: Props) {
   const cfg = LEGAL_CHECKOUT_DOC[slug]
 
-  const { data, isLoading, isError } = useQuery({
+  const { data, isError } = useQuery({
     queryKey: ['legal-document', cfg.type],
     queryFn: () => legalDocumentsService.preview(cfg.type),
+    ...publicQueryOptions,
   })
 
   usePageMeta({
@@ -40,19 +41,13 @@ export function LegalCheckoutDocumentPage({ slug }: Props) {
         </Link>
       </p>
 
-      {isLoading ? (
-        <LoadingState label="Yasal metin yükleniyor…" />
-      ) : (
-        <>
-          {showFallbackNote ? (
-            <p className="mb-4 text-xs text-slate-500">
-              Önizleme metni yüklenemedi veya henüz özelleştirilmedi; varsayılan metin gösteriliyor. Özelleştirmek
-              için Admin Panel → Yasal Metinler bölümünü kullanın.
-            </p>
-          ) : null}
-          <LegalHtmlBody html={html} />
-        </>
-      )}
+      {showFallbackNote ? (
+        <p className="mb-4 text-xs text-slate-500">
+          Önizleme metni yüklenemedi veya henüz özelleştirilmedi; varsayılan metin gösteriliyor. Özelleştirmek
+          için Admin Panel → Yasal Metinler bölümünü kullanın.
+        </p>
+      ) : null}
+      <LegalHtmlBody html={html} />
     </LegalPageLayout>
   )
 }

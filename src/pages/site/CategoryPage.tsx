@@ -6,7 +6,8 @@ import { ProductCard } from '@/components/site/ProductCard'
 import { PageHero } from '@/components/site/PageHero'
 import { Card, CardBody } from '@/components/ui/Card'
 import { EmptyState } from '@/components/ui/EmptyState'
-import { LoadingState } from '@/components/ui/LoadingState'
+import { CardGridSkeleton } from '@/components/ui/PageSkeletons'
+import { publicQueryOptions } from '@/lib/publicQueryOptions'
 import { usePageMeta } from '@/hooks/usePageMeta'
 import { getErrorMessage } from '@/services/api/client'
 import { publicProductCategoriesService } from '@/services/api/publicProductCategories'
@@ -19,12 +20,14 @@ export function CategoryPage() {
     queryKey: ['product-categories', 'public', slug],
     queryFn: () => publicProductCategoriesService.getBySlug(slug),
     enabled: Boolean(slug.trim()),
+    ...publicQueryOptions,
   })
 
   const productsQuery = useQuery({
     queryKey: ['product-categories', 'products', slug],
     queryFn: () => publicProductCategoriesService.listProducts(slug),
     enabled: Boolean(slug.trim()),
+    ...publicQueryOptions,
   })
 
   const category = categoryQuery.data
@@ -55,9 +58,10 @@ export function CategoryPage() {
     )
   }
 
-  const isLoading = categoryQuery.isLoading || productsQuery.isLoading
+  const isPending =
+    (categoryQuery.isPending && !categoryQuery.data) || (productsQuery.isPending && !productsQuery.data)
   const isError = categoryQuery.isError || productsQuery.isError
-  const notFound = !isLoading && !category
+  const notFound = !isPending && !category
 
   return (
     <div className="bg-white">
@@ -88,7 +92,7 @@ export function CategoryPage() {
           </CardBody>
         </Card>
 
-        {isLoading ? <LoadingState label="Ürünler yükleniyor…" /> : null}
+        {isPending ? <CardGridSkeleton count={6} /> : null}
 
         {isError ? (
           <Card className="border-red-200 bg-red-50">
@@ -112,7 +116,7 @@ export function CategoryPage() {
           />
         ) : null}
 
-        {!isLoading && !isError && category && filtered.length === 0 ? (
+        {!isPending && !isError && category && filtered.length === 0 ? (
           <EmptyState
             title="Bu kategoride ürün yok"
             description="Henüz bu kategoriye atanmış yayında ürün bulunmuyor."

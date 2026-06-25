@@ -2,8 +2,8 @@ import { useParams } from 'react-router-dom'
 import { Navigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { LoadingState } from '@/components/ui/LoadingState'
 import { usePageMeta } from '@/hooks/usePageMeta'
+import { publicQueryOptions } from '@/lib/publicQueryOptions'
 import { legalDocumentsService } from '@/services/api/legalDocuments'
 import { resolveLegalDocumentHtml } from '@/data/legalDocumentApiFallbacks'
 import { ALL_LEGAL_DOC_TYPES, type LegalDocType } from '@/types/legalDocuments'
@@ -13,10 +13,11 @@ export function LegalTypeDocumentPage() {
   const { type = '' } = useParams()
   const docType = ALL_LEGAL_DOC_TYPES.includes(type as LegalDocType) ? (type as LegalDocType) : null
 
-  const { data, isLoading, isError } = useQuery({
+  const { data, isError } = useQuery({
     queryKey: ['legal-document', docType],
     queryFn: () => legalDocumentsService.preview(docType!),
     enabled: Boolean(docType),
+    ...publicQueryOptions,
   })
 
   usePageMeta({
@@ -37,19 +38,13 @@ export function LegalTypeDocumentPage() {
           Yazılımlar
         </Link>
       </p>
-      {isLoading ? (
-        <LoadingState label="Yükleniyor…" />
-      ) : (
-        <>
-          {showFallbackNote ? (
-            <p className="mb-4 text-xs text-slate-500">
-              Önizleme metni yüklenemedi veya henüz özelleştirilmedi; varsayılan metin gösteriliyor. Özelleştirmek
-              için Admin Panel → Yasal Metinler bölümünü kullanın.
-            </p>
-          ) : null}
-          <LegalHtmlBody html={html} />
-        </>
-      )}
+      {showFallbackNote ? (
+        <p className="mb-4 text-xs text-slate-500">
+          Önizleme metni yüklenemedi veya henüz özelleştirilmedi; varsayılan metin gösteriliyor. Özelleştirmek
+          için Admin Panel → Yasal Metinler bölümünü kullanın.
+        </p>
+      ) : null}
+      <LegalHtmlBody html={html} />
     </LegalPageLayout>
   )
 }

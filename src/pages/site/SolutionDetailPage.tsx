@@ -1,9 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
-import { LoadingState } from '@/components/ui/LoadingState'
 import { SolutionDetailLayout } from '@/components/site/solutions/SolutionDetailLayout'
 import { DynamicCmsPage } from '@/pages/site/DynamicCmsPage'
 import { usePageMeta } from '@/hooks/usePageMeta'
+import { publicQueryOptions } from '@/lib/publicQueryOptions'
 import { pageContentService } from '@/services/api/pageContent'
 import {
   getSolutionBySlug,
@@ -34,7 +34,7 @@ export function SolutionDetailPage() {
   const { slug = '' } = useParams()
   const base = SOLUTION_DETAIL_BY_SLUG[slug]
 
-  const { data: overrides, isLoading } = useQuery({
+  const { data: overrides } = useQuery({
     queryKey: ['page-content', SOLUTION_PAGE_CONTENT_KEY, slug],
     queryFn: async () => {
       const raw = await pageContentService.getRawByKey(SOLUTION_PAGE_CONTENT_KEY)
@@ -42,6 +42,7 @@ export function SolutionDetailPage() {
       return pages[slug] ?? null
     },
     enabled: Boolean(base),
+    ...publicQueryOptions,
   })
 
   const content = base ? mergeSolution(base, overrides ?? {}) : null
@@ -55,8 +56,6 @@ export function SolutionDetailPage() {
   if (!base) {
     return <DynamicCmsPage slugOverride={slug} />
   }
-
-  if (isLoading && !overrides) return <LoadingState label="Yükleniyor…" />
 
   if (disabled) {
     return (

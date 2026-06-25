@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { publicQueryOptions } from '@/lib/publicQueryOptions'
 import { pageContentService } from '@/services/api/pageContent'
 import { defaultHomePageContent, normalizeHomePageContent, type HomePageContent } from '@/types/homePageContent'
 
@@ -7,7 +8,7 @@ export function useHomePageContent() {
     queryKey: ['page-content', 'home'],
     queryFn: async () => pageContentService.getHome(),
     placeholderData: defaultHomePageContent,
-    staleTime: 60_000,
+    ...publicQueryOptions,
     select: (data) => normalizeHomePageContent(data),
   })
 }

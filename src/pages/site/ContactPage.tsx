@@ -5,8 +5,8 @@ import { Mail, MapPin, MessageCircle, Phone } from 'lucide-react'
 import { PageHero } from '@/components/site/PageHero'
 import { ContactForm } from '@/components/site/ContactForm'
 import { Card, CardBody } from '@/components/ui/Card'
-import { LoadingState } from '@/components/ui/LoadingState'
 import { usePageMeta } from '@/hooks/usePageMeta'
+import { publicQueryOptions } from '@/lib/publicQueryOptions'
 import { usePublicSiteSettings } from '@/hooks/usePublicSiteSettings'
 import { pageContentService } from '@/services/api/pageContent'
 import { getErrorMessage } from '@/services/api/client'
@@ -17,9 +17,11 @@ export function ContactPage() {
   const subject = params.get('konu')?.trim() ?? ''
 
   const { data: settings } = usePublicSiteSettings()
-  const { data, isLoading, isError, error } = useQuery({
+  const { data, isError, error } = useQuery({
     queryKey: ['page-content', 'contact'],
     queryFn: () => pageContentService.getContact(),
+    placeholderData: defaultContactContent,
+    ...publicQueryOptions,
   })
 
   const content = { ...defaultContactContent, ...data }
@@ -72,8 +74,6 @@ export function ContactPage() {
       />
 
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6">
-        {isLoading ? <LoadingState label="İletişim bilgileri yükleniyor…" /> : null}
-
         {isError ? (
           <Card className="mb-8 border-amber-200 bg-amber-50">
             <CardBody>

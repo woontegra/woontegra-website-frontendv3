@@ -4,6 +4,7 @@ import { ChevronDown } from 'lucide-react'
 import { PageHero } from '@/components/site/PageHero'
 import { SiteCtaSection } from '@/components/site/SiteCtaSection'
 import { usePageMeta } from '@/hooks/usePageMeta'
+import { publicQueryOptions } from '@/lib/publicQueryOptions'
 import { pageContentService } from '@/services/api/pageContent'
 import { defaultFaqPageContent } from '@/types/faqPageContent'
 import { MARKETING_PAGE_KEYS } from '@/types/marketingPageContent'
@@ -33,6 +34,8 @@ export function FaqPage() {
   const { data: content = defaultFaqPageContent } = useQuery({
     queryKey: ['page-content', MARKETING_PAGE_KEYS.faq],
     queryFn: () => pageContentService.getFaqPage(),
+    placeholderData: defaultFaqPageContent,
+    ...publicQueryOptions,
   })
 
   const categoryNames = useMemo(() => content.categories.map((c) => c.category), [content.categories])

@@ -4,6 +4,7 @@ import { PageHero } from '@/components/site/PageHero'
 import { MarketingFeatureCard } from '@/components/site/MarketingFeatureCard'
 import { SiteCtaSection } from '@/components/site/SiteCtaSection'
 import { usePageMeta } from '@/hooks/usePageMeta'
+import { publicQueryOptions } from '@/lib/publicQueryOptions'
 import { pageContentService } from '@/services/api/pageContent'
 import {
   defaultServiceCardsBundle,
@@ -33,6 +34,8 @@ export function ServicesPage() {
   const pageQuery = useQuery({
     queryKey: ['page-content', MARKETING_PAGE_KEYS.services],
     queryFn: () => pageContentService.getMarketingPage(MARKETING_PAGE_KEYS.services, defaultServicesPageContent),
+    placeholderData: defaultServicesPageContent,
+    ...publicQueryOptions,
   })
   const cardsQuery = useQuery({
     queryKey: ['page-content', SERVICE_CARDS_KEY],
@@ -40,6 +43,8 @@ export function ServicesPage() {
       const raw = await pageContentService.getRawByKey(SERVICE_CARDS_KEY)
       return mergeServiceCards(defaultServiceCardsBundle, raw as Partial<typeof defaultServiceCardsBundle>)
     },
+    placeholderData: defaultServiceCardsBundle,
+    ...publicQueryOptions,
   })
 
   const page = pageQuery.data ?? defaultServicesPageContent

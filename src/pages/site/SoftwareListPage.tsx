@@ -13,7 +13,8 @@ import { Card, CardBody } from '@/components/ui/Card'
 
 import { EmptyState } from '@/components/ui/EmptyState'
 
-import { LoadingState } from '@/components/ui/LoadingState'
+import { CardGridSkeleton } from '@/components/ui/PageSkeletons'
+import { publicQueryOptions } from '@/lib/publicQueryOptions'
 
 import { usePageMeta } from '@/hooks/usePageMeta'
 
@@ -68,12 +69,10 @@ export function SoftwareListPage() {
 
 
 
-  const { data, isLoading, isError, error, refetch } = useQuery({
-
+  const { data, isPending, isError, error, refetch } = useQuery({
     queryKey: ['products', 'list'],
-
     queryFn: () => productsService.list(),
-
+    ...publicQueryOptions,
   })
 
 
@@ -230,7 +229,7 @@ export function SoftwareListPage() {
 
 
 
-        {isLoading ? <LoadingState label="Yazılımlar yükleniyor…" /> : null}
+        {isPending && !data ? <CardGridSkeleton count={6} /> : null}
 
 
 
@@ -258,7 +257,7 @@ export function SoftwareListPage() {
 
 
 
-        {!isLoading && !isError && filtered.length === 0 ? (
+        {!isPending && !isError && filtered.length === 0 ? (
 
           <EmptyState
 

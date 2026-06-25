@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Card, CardBody } from '@/components/ui/Card'
 import { EmptyState } from '@/components/ui/EmptyState'
-import { LoadingState } from '@/components/ui/LoadingState'
+import { ProductDetailSkeleton } from '@/components/ui/PageSkeletons'
 import { PageHero } from '@/components/site/PageHero'
 import { useSitePageMeta } from '@/hooks/usePageMeta'
 import { productsService } from '@/services/api/products'
@@ -32,6 +32,7 @@ import {
 } from '@/utils/productPurchase'
 import { SafeImage } from '@/components/ui/SafeImage'
 import { resolveMediaUrl } from '@/lib/resolveMediaUrl'
+import { publicQueryOptions } from '@/lib/publicQueryOptions'
 
 const TYPE_LEAD = {
   DOWNLOAD:
@@ -46,10 +47,11 @@ export function SoftwareDetailPage() {
   const [webUsageYears, setWebUsageYears] = useState(1)
   const [toast, setToast] = useState<string | null>(null)
 
-  const { data, isLoading, isError, error } = useQuery({
+  const { data, isPending, isError, error } = useQuery({
     queryKey: ['products', 'detail', slug],
     queryFn: () => productsService.getBySlug(slug),
     enabled: Boolean(slug.trim()),
+    ...publicQueryOptions,
   })
 
   const gallery = useMemo(() => {
@@ -116,12 +118,8 @@ export function SoftwareDetailPage() {
     )
   }
 
-  if (isLoading) {
-    return (
-      <div className="mx-auto max-w-5xl px-4 py-10">
-        <LoadingState label="Yazılım yükleniyor…" />
-      </div>
-    )
+  if (isPending && !data) {
+    return <ProductDetailSkeleton />
   }
 
   if (isError || !data) {

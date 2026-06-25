@@ -8,7 +8,8 @@ import { Card, CardBody } from '@/components/ui/Card'
 
 import { EmptyState } from '@/components/ui/EmptyState'
 
-import { LoadingState } from '@/components/ui/LoadingState'
+import { CardGridSkeleton } from '@/components/ui/PageSkeletons'
+import { publicQueryOptions } from '@/lib/publicQueryOptions'
 
 import { usePageMeta } from '@/hooks/usePageMeta'
 
@@ -30,12 +31,10 @@ export function BlogListPage() {
 
 
 
-  const { data, isLoading, isError, error, refetch } = useQuery({
-
+  const { data, isPending, isError, error, refetch } = useQuery({
     queryKey: ['blog', 'list'],
-
     queryFn: () => blogService.list(),
-
+    ...publicQueryOptions,
   })
 
 
@@ -60,7 +59,7 @@ export function BlogListPage() {
 
       <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
 
-        {isLoading ? <LoadingState label="Blog yazıları yükleniyor…" /> : null}
+        {isPending && !data ? <CardGridSkeleton count={6} /> : null}
 
 
 
@@ -88,7 +87,7 @@ export function BlogListPage() {
 
 
 
-        {!isLoading && !isError && (!data || data.length === 0) ? (
+        {!isPending && !isError && (!data || data.length === 0) ? (
 
           <EmptyState title="Henüz blog yazısı yok" description="Yayında blog yazısı bulunamadı." />
 

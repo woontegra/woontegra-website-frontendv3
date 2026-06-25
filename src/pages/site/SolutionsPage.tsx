@@ -4,6 +4,7 @@ import { PageHero } from '@/components/site/PageHero'
 import { MarketingFeatureCard } from '@/components/site/MarketingFeatureCard'
 import { SiteCtaSection } from '@/components/site/SiteCtaSection'
 import { usePageMeta } from '@/hooks/usePageMeta'
+import { publicQueryOptions } from '@/lib/publicQueryOptions'
 import { pageContentService } from '@/services/api/pageContent'
 import { resolveIcon } from '@/lib/iconRegistry'
 import {
@@ -25,6 +26,8 @@ export function SolutionsPage() {
   const pageQuery = useQuery({
     queryKey: ['page-content', MARKETING_PAGE_KEYS.solutions],
     queryFn: () => pageContentService.getMarketingPage(MARKETING_PAGE_KEYS.solutions, defaultSolutionsPageContent),
+    placeholderData: defaultSolutionsPageContent,
+    ...publicQueryOptions,
   })
   const cardsQuery = useQuery({
     queryKey: ['page-content', SOLUTION_CARDS_KEY],
@@ -32,6 +35,8 @@ export function SolutionsPage() {
       const raw = await pageContentService.getRawByKey(SOLUTION_CARDS_KEY)
       return mergeSolutionCards(defaultSolutionCardsBundle, raw as Partial<typeof defaultSolutionCardsBundle>)
     },
+    placeholderData: defaultSolutionCardsBundle,
+    ...publicQueryOptions,
   })
   const benefitsQuery = useQuery({
     queryKey: ['page-content', SOLUTION_BENEFIT_CARDS_KEY],
@@ -39,6 +44,8 @@ export function SolutionsPage() {
       const raw = await pageContentService.getRawByKey(SOLUTION_BENEFIT_CARDS_KEY)
       return mergeSolutionBenefitCards(defaultSolutionBenefitCardsBundle, raw as Partial<typeof defaultSolutionBenefitCardsBundle>)
     },
+    placeholderData: defaultSolutionBenefitCardsBundle,
+    ...publicQueryOptions,
   })
 
   const page = pageQuery.data ?? defaultSolutionsPageContent

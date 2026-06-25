@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
-import { LoadingState } from '@/components/ui/LoadingState'
 import { ServiceDetailLayout } from '@/components/site/services/ServiceDetailLayout'
 import { usePageMeta } from '@/hooks/usePageMeta'
 import { mergeServicePage, servicePageSeo, type ServicePageOverrides } from '@/lib/servicePageMerge'
 import { resolveServiceSlug } from '@/lib/serviceSlugs'
+import { publicQueryOptions } from '@/lib/publicQueryOptions'
 import { pageContentService } from '@/services/api/pageContent'
 import { SERVICE_PAGE_CONTENT_KEY } from '@/data/serviceCatalog'
 import { SERVICE_DETAIL_BY_SLUG } from '@/data/serviceDetailContent'
@@ -23,7 +23,7 @@ export function ServiceDetailPage() {
   const slug = resolveServiceSlug(rawSlug)
   const base = SERVICE_DETAIL_BY_SLUG[slug]
 
-  const { data: overrides, isLoading } = useQuery({
+  const { data: overrides } = useQuery({
     queryKey: ['page-content', SERVICE_PAGE_CONTENT_KEY, slug],
     queryFn: async () => {
       const raw = await pageContentService.getRawByKey(SERVICE_PAGE_CONTENT_KEY)
@@ -31,6 +31,7 @@ export function ServiceDetailPage() {
       return pages[slug] ?? null
     },
     enabled: Boolean(base),
+    ...publicQueryOptions,
   })
 
   const content = base ? mergeServicePage(base, overrides ?? {}) : null
@@ -52,8 +53,6 @@ export function ServiceDetailPage() {
       </div>
     )
   }
-
-  if (isLoading && !overrides) return <LoadingState label="Yükleniyor…" />
 
   if (disabled) {
     return (

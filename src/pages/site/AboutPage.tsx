@@ -11,6 +11,7 @@ import {
   AboutWorkApproach,
 } from '@/components/site/about/AboutSections'
 import { usePageMeta } from '@/hooks/usePageMeta'
+import { publicQueryOptions } from '@/lib/publicQueryOptions'
 import { pageContentService } from '@/services/api/pageContent'
 import { defaultAboutPageContent } from '@/types/aboutPageContent'
 
@@ -19,7 +20,7 @@ export function AboutPage() {
     queryKey: ['page-content', 'about'],
     queryFn: () => pageContentService.getAbout(),
     placeholderData: defaultAboutPageContent,
-    staleTime: 60_000,
+    ...publicQueryOptions,
   })
 
   usePageMeta({

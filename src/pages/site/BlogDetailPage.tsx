@@ -11,7 +11,7 @@ import { SiteCtaSection } from '@/components/site/SiteCtaSection'
 import { Badge } from '@/components/ui/Badge'
 import { Card, CardBody } from '@/components/ui/Card'
 import { EmptyState } from '@/components/ui/EmptyState'
-import { LoadingState } from '@/components/ui/LoadingState'
+import { BlogDetailSkeleton } from '@/components/ui/PageSkeletons'
 import { useSitePageMeta } from '@/hooks/usePageMeta'
 import { blogService } from '@/services/api/blog'
 import { getErrorMessage } from '@/services/api/client'
@@ -21,21 +21,24 @@ import {
   estimateReadingTimeMinutes,
   formatReadingTime,
 } from '@/lib/blogReading'
+import { publicQueryOptions } from '@/lib/publicQueryOptions'
 import { resolveMediaUrl } from '@/utils/mediaUrl'
 
 export function BlogDetailPage() {
   const { slug = '' } = useParams()
 
-  const { data, isLoading, isError, error } = useQuery({
+  const { data, isPending, isError, error } = useQuery({
     queryKey: ['blog', 'detail', slug],
     queryFn: () => blogService.getBySlug(slug),
     enabled: Boolean(slug.trim()),
+    ...publicQueryOptions,
   })
 
   const { data: allPosts } = useQuery({
     queryKey: ['blog', 'list'],
     queryFn: () => blogService.list(),
-    enabled: Boolean(data),
+    enabled: Boolean(slug.trim()),
+    ...publicQueryOptions,
   })
 
   useSitePageMeta({
@@ -66,12 +69,8 @@ export function BlogDetailPage() {
     )
   }
 
-  if (isLoading) {
-    return (
-      <div className="mx-auto max-w-3xl px-4 py-10">
-        <LoadingState label="Yazı yükleniyor…" />
-      </div>
-    )
+  if (isPending && !data) {
+    return <BlogDetailSkeleton />
   }
 
   if (isError || !data) {

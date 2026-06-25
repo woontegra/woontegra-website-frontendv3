@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useMemo } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import {
   defaultFooterGroupsBundle,
   getActiveFooterGroups,
@@ -7,6 +8,7 @@ import {
 } from '@/data/footerGroupsContent'
 import { footerGroupsService } from '@/services/api/footerGroups'
 import { usePublicSiteSettings } from '@/hooks/usePublicSiteSettings'
+import { publicQueryOptions } from '@/lib/publicQueryOptions'
 
 function resolveContactGroup(groups: FooterGroupConfig[], email?: string, phone?: string): FooterGroupConfig[] {
   return groups.map((group) => {
@@ -27,35 +29,27 @@ function resolveContactGroup(groups: FooterGroupConfig[], email?: string, phone?
 }
 
 export function useFooterGroups() {
-  const [bundle, setBundle] = useState<FooterGroupsBundle>(defaultFooterGroupsBundle)
-  const [loaded, setLoaded] = useState(false)
   const { data: settings } = usePublicSiteSettings()
+  const query = useQuery({
+    queryKey: ['public', 'footer-groups'],
+    queryFn: () => footerGroupsService.get(),
+    placeholderData: defaultFooterGroupsBundle,
+    ...publicQueryOptions,
+  })
 
-  useEffect(() => {
-    let cancelled = false
-    void footerGroupsService
-      .get()
-      .then((data) => {
-        if (!cancelled) {
-          setBundle(data)
-          setLoaded(true)
-        }
-      })
-      .catch(() => {
-        if (!cancelled) setLoaded(true)
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [])
+  const bundle = query.data ?? defaultFooterGroupsBundle
 
-  const groups = resolveContactGroup(
-    getActiveFooterGroups(bundle),
-    settings?.contactEmail?.trim(),
-    settings?.contactPhone?.trim(),
+  const groups = useMemo(
+    () =>
+      resolveContactGroup(
+        getActiveFooterGroups(bundle),
+        settings?.contactEmail?.trim(),
+        settings?.contactPhone?.trim(),
+      ),
+    [bundle, settings?.contactEmail, settings?.contactPhone],
   )
 
-  return { groups, loaded }
+  return { groups, loaded: query.isFetched }
 }
 
-export type { FooterGroupConfig }
+export type { FooterGroupConfig, FooterGroupsBundle }

@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { publicQueryOptions } from '@/lib/publicQueryOptions'
 import { siteSettingsService } from '@/services/api/siteSettings'
 import { DEFAULT_PUBLIC_SITE_SETTINGS } from '@/types/siteSettings'
 import { DEFAULT_HEADER_LOGO_PATH } from '@/data/siteLogo'
@@ -10,7 +11,7 @@ export function usePublicSiteSettings() {
   return useQuery({
     queryKey: ['public', 'siteSettings'],
     queryFn: () => siteSettingsService.getPublic(),
-    staleTime: 60_000,
+    ...publicQueryOptions,
     placeholderData: (prev) => prev ?? DEFAULT_PUBLIC_SITE_SETTINGS,
   })
 }
