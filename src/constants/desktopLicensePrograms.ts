@@ -3,6 +3,7 @@ export type DesktopLicenseProgramOption = {
   appCode: string
 }
 
+/** Seed / öneri listesi — satış doğrulamasında kullanılmaz. Kaynak: lisans sunucusu API. */
 export const DESKTOP_LICENSE_PROGRAMS: DesktopLicenseProgramOption[] = [
   { label: 'Müvekkil Kasa Defteri Desktop', appCode: 'MUVEKKIL_KASA_DESKTOP' },
   { label: 'Şifre Kasası Desktop', appCode: 'SIFRE_KASASI_DESKTOP' },

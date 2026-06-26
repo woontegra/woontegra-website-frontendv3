@@ -21,7 +21,7 @@ import {
   presetShowsSaasFields,
   type AdminProductPresetId,
 } from '@/constants/adminProductPresets'
-import { DESKTOP_LICENSE_PROGRAMS } from '@/constants/desktopLicensePrograms'
+import { LicenseProgramPicker } from '@/components/admin/LicenseProgramPicker'
 import { adminProductsService, getErrorMessage } from '@/services/api/adminProducts'
 import { productCategoriesService } from '@/services/api/productCategories'
 import type { AdminProductInput } from '@/types/product'
@@ -595,28 +595,18 @@ export function AdminProductFormPage() {
                           setForm((p) => ({
                             ...p,
                             licenseRequired: v,
-                            licenseAppCode: v ? p.licenseAppCode || 'MUVEKKIL_KASA_DESKTOP' : null,
+                            licenseAppCode: v ? p.licenseAppCode : null,
                           }))
                         }}
                         description="Ödeme onayından sonra merkezi Woontegra Lisans Server'a bildirilir; lisans bilgileri müşteriye e-posta ile iletilir."
                       />
                       {form.licenseRequired ? (
                         <div className="grid gap-4 sm:grid-cols-2">
-                          <div>
-                            <label className="mb-1.5 block text-sm font-medium text-slate-700">
-                              Lisans program kodu (appCode)
-                            </label>
-                            <select
-                              value={form.licenseAppCode ?? ''}
-                              onChange={(e) => update('licenseAppCode', e.target.value)}
-                              className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
-                            >
-                              {DESKTOP_LICENSE_PROGRAMS.map((p) => (
-                                <option key={p.appCode} value={p.appCode}>
-                                  {p.label} ({p.appCode})
-                                </option>
-                              ))}
-                            </select>
+                          <div className="sm:col-span-2">
+                            <LicenseProgramPicker
+                              value={form.licenseAppCode}
+                              onChange={(appCode) => update('licenseAppCode', appCode)}
+                            />
                           </div>
                           <Input
                             label="Lisans süresi (gün)"
@@ -662,25 +652,15 @@ export function AdminProductFormPage() {
                           setForm((p) => ({
                             ...p,
                             licenseRequired: v,
-                            licenseAppCode: v ? p.licenseAppCode || 'MUVEKKIL_KASA_DESKTOP' : null,
+                            licenseAppCode: v ? p.licenseAppCode : null,
                           }))
                         }}
                       />
                       {form.licenseRequired ? (
-                        <div>
-                          <label className="mb-1.5 block text-sm font-medium text-slate-700">Lisans appCode</label>
-                          <select
-                            value={form.licenseAppCode ?? ''}
-                            onChange={(e) => update('licenseAppCode', e.target.value)}
-                            className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
-                          >
-                            {DESKTOP_LICENSE_PROGRAMS.map((p) => (
-                              <option key={p.appCode} value={p.appCode}>
-                                {p.label}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
+                        <LicenseProgramPicker
+                          value={form.licenseAppCode}
+                          onChange={(appCode) => update('licenseAppCode', appCode)}
+                        />
                       ) : null}
                       <TextArea
                         label="Teslimat açıklaması (detay sayfasında)"

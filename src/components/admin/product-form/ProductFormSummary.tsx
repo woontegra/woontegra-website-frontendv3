@@ -1,3 +1,4 @@
+import { useQuery } from '@tanstack/react-query'
 import { Badge } from '@/components/ui/Badge'
 import { Card, CardBody } from '@/components/ui/Card'
 import type { AdminProductInput } from '@/types/product'
@@ -13,7 +14,9 @@ import {
   hasSetupDownloadFile,
 } from '@/lib/productDownloadFiles'
 import { formatMoney } from '@/utils/formatMoney'
-import { isReadyForSale } from '@/lib/adminProductForm'
+import { isReadyForSale, hasDigitalDelivery } from '@/lib/adminProductForm'
+import { adminLicenseProgramsService } from '@/services/api/adminLicensePrograms'
+import { licenseProgramReadinessLabel } from '@/components/admin/LicenseProgramPicker'
 
 type Props = {
   form: AdminProductInput
@@ -24,6 +27,26 @@ type Props = {
 export function ProductFormSummary({ form, presetId, coverPreview }: Props) {
   const ready = isReadyForSale(form, presetId)
   const hasPrice = Number.isFinite(form.price) && form.price > 0
+  const hasDelivery = hasDigitalDelivery(form)
+
+  const programsQuery = useQuery({
+    queryKey: ['admin', 'license-programs'],
+    queryFn: () => adminLicenseProgramsService.list(false),
+    enabled: form.licenseRequired,
+    staleTime: 60_000,
+  })
+
+  const selectedProgram =
+    programsQuery.data?.find((p) => p.appCode === form.licenseAppCode?.trim()) ?? null
+  const licenseReady = licenseProgramReadinessLabel(
+    form.licenseRequired,
+    form.licenseAppCode,
+    selectedProgram,
+  )
+  const saleReady =
+    ready &&
+    (!form.licenseRequired || licenseReady.tone === 'success') &&
+    (!form.licenseRequired || hasDelivery)
 
   return (
     <Card className="sticky top-20 border-slate-200 shadow-sm">
@@ -85,6 +108,11 @@ export function ProductFormSummary({ form, presetId, coverPreview }: Props) {
           <div>
             <p className="text-xs text-slate-500">Lisans durumu</p>
             <p className="font-medium text-slate-900">{licenseStatusLabel(form)}</p>
+            {form.licenseRequired ? (
+              <div className="mt-1">
+                <Badge tone={licenseReady.tone}>{licenseReady.label}</Badge>
+              </div>
+            ) : null}
           </div>
           <div>
             <p className="text-xs text-slate-500">Yayında mı?</p>
@@ -94,14 +122,16 @@ export function ProductFormSummary({ form, presetId, coverPreview }: Props) {
 
         <div
           className={`rounded-lg border px-3 py-2 text-xs ${
-            ready
+            saleReady
               ? 'border-emerald-200 bg-emerald-50 text-emerald-900'
               : 'border-amber-200 bg-amber-50 text-amber-950'
           }`}
         >
-          {ready
+          {saleReady
             ? 'Satışa hazır görünüyor. Kaydettikten sonra public sayfada kontrol edin.'
-            : 'Satışa açmak için fiyat, teslimat veya lisans alanlarını tamamlayın.'}
+            : form.licenseRequired && licenseReady.tone !== 'success'
+              ? 'Satışa açmak için lisans sunucusunda aktif bir program seçin.'
+              : 'Satışa açmak için fiyat, teslimat veya lisans alanlarını tamamlayın.'}
         </div>
       </CardBody>
     </Card>
