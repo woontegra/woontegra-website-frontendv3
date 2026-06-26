@@ -5,7 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "generate:sitemap": "node scripts/generate-sitemap.mjs",
+    "check:seo": "node scripts/check-seo-files.mjs",
+    "prebuild": "node scripts/generate-sitemap.mjs",
     "build": "tsc -b && vite build",
+    "postbuild": "node scripts/check-seo-files.mjs",
     "preview": "vite preview"
   },
   "dependencies": {
