@@ -196,7 +196,10 @@ export function AdminProductFormPage() {
       coverImageMediaId: data.coverImageMediaId,
       downloadMediaId: data.downloadMediaId,
       coverImage: data.coverImage ?? '',
-      downloadUrl: data.downloadUrl ?? '',
+      downloadUrl:
+        data.downloadUrl && data.downloadMedia?.url && data.downloadUrl.trim() === data.downloadMedia.url.trim()
+          ? ''
+          : (data.downloadUrl ?? ''),
       downloadFiles: buildAdminDownloadFilesFormState(data.downloadFiles, data.downloadUrl),
     }
     setForm(loaded)
