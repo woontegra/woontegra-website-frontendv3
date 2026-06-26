@@ -40,6 +40,7 @@ import { TurkeyCityDistrictFields } from '@/components/checkout/TurkeyCityDistri
 import { BillingIdentityNumberField } from '@/components/checkout/BillingIdentityNumberField'
 import { matchDistrictName, matchProvinceName } from '@/data/turkeyLocation'
 import { resolveCheckoutTaxNumber, validateCheckoutBilling } from '@/utils/checkoutBilling'
+import { clearCart } from '@/lib/cartStorage'
 
 type PaymentMethod = 'PAYTR' | 'BANK_TRANSFER'
 
@@ -255,6 +256,7 @@ export function ProductCheckoutPage() {
       sessionStorage.setItem(LAST_ORDER_EMAIL_KEY, form.customerEmail.trim().toLowerCase())
 
       if (paymentMethod === 'BANK_TRANSFER' || created.paymentProvider === 'BANK_TRANSFER') {
+        clearCart()
         navigate(`/odeme/basarili/${encodeURIComponent(created.orderNo)}`)
         return
       }

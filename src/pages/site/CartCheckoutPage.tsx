@@ -230,10 +230,9 @@ function CartMultiCheckoutPage() {
       })
 
       sessionStorage.setItem(LAST_ORDER_EMAIL_KEY, form.customerEmail.trim().toLowerCase())
-      clearCart()
-      window.dispatchEvent(new Event('woontegra-cart'))
 
       if (paymentMethod === 'BANK_TRANSFER' || created.paymentProvider === 'BANK_TRANSFER') {
+        clearCart()
         navigate(`/odeme/basarili/${encodeURIComponent(created.orderNo)}`)
         return
       }

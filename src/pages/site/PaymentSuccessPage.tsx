@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { Button } from '@/components/ui/Button'
 import { Card, CardBody } from '@/components/ui/Card'
@@ -10,6 +10,7 @@ import { ordersService } from '@/services/api/orders'
 import { LAST_ORDER_EMAIL_KEY, type OrderSuccessData, type OrderSuccessPaid } from '@/types/checkout'
 import { formatMoney } from '@/utils/formatMoney'
 import { CENTRAL_LICENSE_EMAIL_MESSAGE } from '@/constants/centralLicenseServer'
+import { clearCart } from '@/lib/cartStorage'
 import { isSaasOrderDeliveryUrl } from '@/utils/productPurchase'
 
 const POLL_MS = 2000
@@ -83,6 +84,7 @@ export function PaymentSuccessPage() {
   const [polling, setPolling] = useState(false)
   const [emailInput, setEmailInput] = useState('')
   const [emailToken, setEmailToken] = useState(0)
+  const cartClearedForOrder = useRef<string | null>(null)
 
   useSitePageMeta({
     title: orderNo ? `Sipariş ${orderNo}` : 'Ödeme başarılı',
@@ -163,6 +165,14 @@ export function PaymentSuccessPage() {
       clearTimer()
     }
   }, [orderNo, fetchOrder])
+
+  useEffect(() => {
+    if (!orderNo || !data) return
+    if (data.status === 'FAILED' || data.status === 'CANCELLED') return
+    if (cartClearedForOrder.current === orderNo) return
+    cartClearedForOrder.current = orderNo
+    clearCart()
+  }, [orderNo, data])
 
   const applyEmail = () => {
     const t = emailInput.trim()

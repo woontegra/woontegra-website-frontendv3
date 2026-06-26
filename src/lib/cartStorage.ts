@@ -164,6 +164,7 @@ export function writeCart(lines: CartLine[]): void {
 export function clearCart(): void {
   localStorage.removeItem(CART_KEY)
   localStorage.removeItem(CART_KEY_V1)
+  window.dispatchEvent(new Event('woontegra-cart'))
 }
 
 export function isProductInCart(productId: string): boolean {
