@@ -36,6 +36,8 @@ import {
   productTypeLabel,
 } from '@/utils/productPurchase'
 import { productCoverUrl } from '@/utils/mediaUrl'
+import { TurkeyCityDistrictFields } from '@/components/checkout/TurkeyCityDistrictFields'
+import { matchDistrictName, matchProvinceName } from '@/data/turkeyLocation'
 
 type PaymentMethod = 'PAYTR' | 'BANK_TRANSFER'
 
@@ -221,8 +223,11 @@ export function ProductCheckoutPage() {
         companyName: form.companyName.trim() || undefined,
         taxOffice: form.taxOffice.trim() || undefined,
         taxNumber: form.taxNumber.trim() || undefined,
-        deliveryCity: form.deliveryCity.trim() || undefined,
-        deliveryDistrict: form.deliveryDistrict.trim() || undefined,
+        deliveryCity: matchProvinceName(form.deliveryCity) || form.deliveryCity.trim() || undefined,
+        deliveryDistrict:
+          matchDistrictName(form.deliveryCity, form.deliveryDistrict) ||
+          form.deliveryDistrict.trim() ||
+          undefined,
         deliveryLine: form.deliveryLine.trim() || undefined,
         acceptPreInfo: acceptPre,
         acceptDistanceSales: acceptDistance,
@@ -391,15 +396,13 @@ export function ProductCheckoutPage() {
                 </div>
               ) : null}
               <div className="grid gap-4 sm:grid-cols-2">
-                <Input
-                  label="İl"
-                  value={form.deliveryCity}
-                  onChange={(e) => setForm((f) => ({ ...f, deliveryCity: e.target.value }))}
-                />
-                <Input
-                  label="İlçe"
-                  value={form.deliveryDistrict}
-                  onChange={(e) => setForm((f) => ({ ...f, deliveryDistrict: e.target.value }))}
+                <TurkeyCityDistrictFields
+                  idPrefix="product-checkout"
+                  city={form.deliveryCity}
+                  district={form.deliveryDistrict}
+                  onCityChange={(deliveryCity) => setForm((f) => ({ ...f, deliveryCity }))}
+                  onDistrictChange={(deliveryDistrict) => setForm((f) => ({ ...f, deliveryDistrict }))}
+                  selectClassName={inputCls}
                 />
               </div>
               <Input

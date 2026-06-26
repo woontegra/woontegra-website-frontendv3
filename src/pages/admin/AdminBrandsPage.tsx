@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { imageUploadSizeHint } from '@/constants/imageUploadSpecs'
 import { Pencil, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Card, CardBody } from '@/components/ui/Card'
@@ -71,6 +72,7 @@ export function AdminBrandsPage() {
           />
           <Input
             label="Logo / görsel URL"
+            hint={imageUploadSizeHint('brandLogo')}
             value={form.image}
             onChange={(e) => setForm((f) => ({ ...f, image: e.target.value }))}
             placeholder="/images/... veya https://..."

@@ -24,7 +24,9 @@ import { adminProductsService, getErrorMessage } from '@/services/api/adminProdu
 import { productCategoriesService } from '@/services/api/productCategories'
 import type { AdminProductInput } from '@/types/product'
 import type { CatalogMedia } from '@/types/catalogMedia'
+import { ImageUploadSizeNote } from '@/components/admin/ImageUploadSizeNote'
 import { MediaPickerModal } from '@/components/admin/MediaPickerModal'
+import { imageUploadSizeHint } from '@/constants/imageUploadSpecs'
 import { slugifySoftwareName } from '@/types/product'
 import {
   PRODUCT_FORM_TABS,
@@ -672,7 +674,8 @@ export function AdminProductFormPage() {
                     seçin.
                   </p>
                   <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-                    <p className="mb-3 text-sm font-medium text-slate-800">Kapak görseli</p>
+                    <p className="mb-1 text-sm font-medium text-slate-800">Kapak görseli</p>
+                    <ImageUploadSizeNote spec="productCover" className="mb-3" />
                     <div className="flex flex-wrap items-start gap-4">
                       {coverPreview ? (
                         <SafeImage
@@ -726,6 +729,7 @@ export function AdminProductFormPage() {
                             {useCoverUrl ? (
                               <Input
                                 label="Kapak görsel URL"
+                                hint={imageUploadSizeHint('productCover')}
                                 value={form.coverImage ?? ''}
                                 onChange={(e) => {
                                   update('coverImage', e.target.value)
@@ -743,6 +747,7 @@ export function AdminProductFormPage() {
                   <div className="rounded-lg border border-slate-200 p-4">
                     <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                       <p className="text-sm font-medium text-slate-800">Galeri görselleri</p>
+                      <ImageUploadSizeNote spec="productGallery" className="mt-1" />
                       <Button type="button" variant="secondary" size="sm" onClick={() => setGalleryPickerOpen(true)}>
                         <Images className="h-4 w-4" />
                         Görsel ekle
@@ -867,6 +872,7 @@ export function AdminProductFormPage() {
         open={coverPickerOpen}
         title="Kapak görseli seç"
         allowedTypes={['IMAGE']}
+        imageSizeSpec="productCover"
         onClose={() => setCoverPickerOpen(false)}
         onSelect={onCoverSelect}
       />
@@ -874,6 +880,7 @@ export function AdminProductFormPage() {
         open={galleryPickerOpen}
         title="Galeri görseli ekle"
         allowedTypes={['IMAGE']}
+        imageSizeSpec="productGallery"
         onClose={() => setGalleryPickerOpen(false)}
         onSelect={onGallerySelect}
       />

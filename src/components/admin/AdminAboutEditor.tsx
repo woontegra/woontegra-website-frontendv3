@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button'
 import { Card, CardBody } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
 import { ManagedImageField } from '@/components/admin/ManagedImageField'
+import { imageUploadSizeHint } from '@/constants/imageUploadSpecs'
 import type { AboutPageContent, AboutSimpleCard, AboutTimelineStep, AboutIconCard, AboutBrandCard, AboutStatCard } from '@/types/aboutPageContent'
 
 type TabId = 'hero' | 'whatIs' | 'timeline' | 'diff' | 'brands' | 'work' | 'structure' | 'vision' | 'cta' | 'seo'
@@ -67,7 +68,7 @@ export function AdminAboutEditor({ value, onChange }: Props) {
               <Input label="Etiket" value={value.hero.eyebrow} onChange={(e) => patch({ hero: { ...value.hero, eyebrow: e.target.value } })} />
               <Input label="Başlık" value={value.hero.title} onChange={(e) => patch({ hero: { ...value.hero, title: e.target.value } })} />
               <textarea className={fieldClass} rows={3} value={value.hero.subtitle} onChange={(e) => patch({ hero: { ...value.hero, subtitle: e.target.value } })} placeholder="Hero açıklama" />
-              <ManagedImageField label="Hero görseli" value={value.hero.image} onChange={(image) => patch({ hero: { ...value.hero, image } })} />
+              <ManagedImageField label="Hero görseli" sizeSpec="aboutHero" value={value.hero.image} onChange={(image) => patch({ hero: { ...value.hero, image } })} />
             </>
           ) : null}
 
@@ -257,7 +258,7 @@ function BrandsEditor({ cards, onChange }: { cards: AboutBrandCard[]; onChange: 
           </div>
           <div className="grid gap-3 md:grid-cols-2">
             <Input label="Marka adı" value={card.name} onChange={(e) => onChange(cards.map((c) => (c.id === card.id ? { ...c, name: e.target.value } : c)))} />
-            <Input label="Görsel URL" value={card.image} onChange={(e) => onChange(cards.map((c) => (c.id === card.id ? { ...c, image: e.target.value } : c)))} />
+            <Input label="Görsel URL" hint={imageUploadSizeHint('partnerCard')} value={card.image} onChange={(e) => onChange(cards.map((c) => (c.id === card.id ? { ...c, image: e.target.value } : c)))} />
             <Input label="Site URL" value={card.url} onChange={(e) => onChange(cards.map((c) => (c.id === card.id ? { ...c, url: e.target.value } : c)))} />
           </div>
           <textarea className={`${fieldClass} mt-2`} rows={2} value={card.text} onChange={(e) => onChange(cards.map((c) => (c.id === card.id ? { ...c, text: e.target.value } : c)))} />

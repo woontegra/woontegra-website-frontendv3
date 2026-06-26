@@ -176,7 +176,8 @@ export function AdminSiteSettingsPage() {
               value={form.logo}
               logoUpdatedAt={form.logoUpdatedAt}
               onChange={(url) => patch('logo', url)}
-              hint="Header'da kullanılır. Medya kütüphanesinden seçin."
+              hint="Header'da kullanılır."
+              sizeSpec="siteLogo"
             />
             <LogoWidthField
               value={form.navbarLogoWidth}
@@ -188,7 +189,7 @@ export function AdminSiteSettingsPage() {
               label="Favicon"
               value={form.favicon}
               onChange={(url) => patch('favicon', url)}
-              hint="Tarayıcı sekmesi ikonu."
+              sizeSpec="favicon"
             />
           </CardBody>
         </Card>

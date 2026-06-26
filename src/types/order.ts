@@ -61,6 +61,9 @@ export type AdminOrderItem = {
   quantity: number
   total: number
   downloadUrl: string | null
+  licenseRequired?: boolean
+  licenseServerUnitsNotified?: number
+  licenseServerLastError?: string | null
 }
 
 export type AdminPaymentTransaction = {
@@ -180,6 +183,10 @@ function normalizeOrderItem(raw: unknown, index: number): AdminOrderItem | null 
     quantity: toNumber(row.quantity, 1),
     total: toNumber(row.total),
     downloadUrl: row.downloadUrl == null ? null : toString(row.downloadUrl),
+    licenseRequired: toBool(row.licenseRequired, false),
+    licenseServerUnitsNotified:
+      typeof row.licenseServerUnitsNotified === 'number' ? row.licenseServerUnitsNotified : undefined,
+    licenseServerLastError: row.licenseServerLastError == null ? null : toString(row.licenseServerLastError),
   }
 }
 

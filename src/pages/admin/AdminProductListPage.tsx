@@ -30,8 +30,18 @@ function hasCoverImage(item: AdminProduct): boolean {
   return Boolean(item.coverImageMediaId || item.coverMedia?.url || item.coverImage?.trim())
 }
 
+function isFreeDownloadProduct(item: AdminProduct): boolean {
+  return (
+    item.productType === 'DOWNLOAD' &&
+    !item.purchaseEnabled &&
+    (!Number.isFinite(item.price) || item.price <= 0) &&
+    hasDigitalDelivery(item)
+  )
+}
+
 function saleBadge(item: AdminProduct) {
   if (!item.isActive) return { label: 'Yayında değil', tone: 'default' as const }
+  if (isFreeDownloadProduct(item)) return { label: 'Ücretsiz', tone: 'success' as const }
   if (!item.purchaseEnabled) return { label: 'Satış kapalı', tone: 'warning' as const }
   if (!Number.isFinite(item.price) || item.price <= 0) return { label: 'Fiyatsız', tone: 'warning' as const }
   return { label: 'Satışta', tone: 'success' as const }

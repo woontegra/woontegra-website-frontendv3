@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, CheckCircle } from 'lucide-react'
+import { ArrowLeft, CheckCircle, RefreshCw } from 'lucide-react'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Card, CardBody } from '@/components/ui/Card'
@@ -91,6 +91,15 @@ export function AdminOrderDetailPage() {
     onError: (err) => setFormError(getErrorMessage(err)),
   })
 
+  const retryDeliveryMutation = useMutation({
+    mutationFn: () => adminOrdersService.retryDelivery(id),
+    onSuccess: () => {
+      setToast('Lisans teslimatı yeniden denendi.')
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'orders', id] })
+    },
+    onError: (err) => setFormError(getErrorMessage(err)),
+  })
+
   if (!id) {
     return <EmptyState title="Geçersiz sipariş" description="Sipariş kimliği bulunamadı." />
   }
@@ -114,6 +123,12 @@ export function AdminOrderDetailPage() {
   const payKind = resolvePaymentBadgeKind(data)
   const canConfirmBank = showHavaleConfirmButton(data)
   const isBank = isBankTransferLikeProvider(data.paymentProvider) || isBankTransferLikeProvider(data.paymentMethod)
+  const paidLike = data.status === 'PAID' || data.status === 'PROCESSING'
+  const centralLicenseItems = data.items.filter((i) => i.licenseRequired)
+  const centralLicenseErrors = centralLicenseItems.filter((i) => i.licenseServerLastError?.trim())
+  const canRetryDelivery =
+    paidLike &&
+    (centralLicenseErrors.length > 0 || (centralLicenseItems.length > 0 && !data.downloadEmailSentAt))
 
   return (
     <div className="w-full min-w-0 space-y-6">
@@ -184,9 +199,38 @@ export function AdminOrderDetailPage() {
               <InfoRow label="Havale onaylayan" value={data.paymentConfirmedByEmail} />
             ) : null}
             {data.digitalDeliveryEmailAlert ? (
-              <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
-                {data.digitalDeliveryEmailAlert}
-              </p>
+              <div className="space-y-2">
+                <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                  {data.digitalDeliveryEmailAlert}
+                </p>
+                {canRetryDelivery ? (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    disabled={retryDeliveryMutation.isPending}
+                    onClick={() => {
+                      setFormError(null)
+                      void retryDeliveryMutation.mutateAsync()
+                    }}
+                  >
+                    <RefreshCw className={`mr-1.5 h-3.5 w-3.5 ${retryDeliveryMutation.isPending ? 'animate-spin' : ''}`} />
+                    Lisans teslimatını yeniden dene
+                  </Button>
+                ) : null}
+              </div>
+            ) : canRetryDelivery ? (
+              <Button
+                variant="secondary"
+                size="sm"
+                disabled={retryDeliveryMutation.isPending}
+                onClick={() => {
+                  setFormError(null)
+                  void retryDeliveryMutation.mutateAsync()
+                }}
+              >
+                <RefreshCw className={`mr-1.5 h-3.5 w-3.5 ${retryDeliveryMutation.isPending ? 'animate-spin' : ''}`} />
+                Lisans teslimatını yeniden dene
+              </Button>
             ) : (
               <p className="text-xs text-slate-500">
                 Detaylı e-posta hata günlüğü backend yanıtında yok; uyarı varsa yukarıda gösterilir.
@@ -209,6 +253,7 @@ export function AdminOrderDetailPage() {
                 <TH>Birim</TH>
                 <TH>Toplam</TH>
                 <TH>Teslimat</TH>
+                <TH>Merkezi lisans</TH>
               </TR>
             </THead>
             <TBody>
@@ -227,6 +272,21 @@ export function AdminOrderDetailPage() {
                         ? 'E-posta ile hesap'
                         : 'İndirme bağlantısı'
                       : '—'}
+                  </TD>
+                  <TD className="text-xs">
+                    {item.licenseRequired ? (
+                      item.licenseServerLastError?.trim() ? (
+                        <span className="text-red-700">{item.licenseServerLastError.trim()}</span>
+                      ) : (item.licenseServerUnitsNotified ?? 0) >= item.quantity ? (
+                        <span className="text-emerald-700">Oluşturuldu ({item.licenseServerUnitsNotified}/{item.quantity})</span>
+                      ) : paidLike ? (
+                        <span className="text-amber-800">Bekleniyor</span>
+                      ) : (
+                        <span className="text-slate-500">Ödeme sonrası</span>
+                      )
+                    ) : (
+                      <span className="text-slate-400">—</span>
+                    )}
                   </TD>
                 </TR>
               ))}
@@ -347,15 +407,36 @@ export function AdminOrderDetailPage() {
             </Table>
           </CardBody>
         </Card>
-      ) : (data.status === 'PAID' || data.status === 'PROCESSING') ? (
+      ) : paidLike && centralLicenseItems.length > 0 ? (
         <Card className="border-sky-200 bg-sky-50/60">
           <CardBody>
             <h2 className="text-sm font-semibold text-sky-950">Merkezi lisans durumu</h2>
-            <p className="mt-2 text-sm text-sky-900">{CENTRAL_LICENSE_PENDING_ADMIN}</p>
+            {centralLicenseErrors.length > 0 ? (
+              <p className="mt-2 text-sm text-red-800">
+                Lisans oluşturulamadı: {centralLicenseErrors[0]!.licenseServerLastError}
+              </p>
+            ) : (
+              <p className="mt-2 text-sm text-sky-900">{CENTRAL_LICENSE_PENDING_ADMIN}</p>
+            )}
             <p className="mt-2 text-xs text-sky-800">
               Teslimat: ödeme onayı sonrası lisans bilgileri e-posta ile iletilir. İndirme e-postası:{' '}
               {formatDateTime(data.downloadEmailSentAt)}
             </p>
+            {canRetryDelivery ? (
+              <Button
+                className="mt-3"
+                variant="secondary"
+                size="sm"
+                disabled={retryDeliveryMutation.isPending}
+                onClick={() => {
+                  setFormError(null)
+                  void retryDeliveryMutation.mutateAsync()
+                }}
+              >
+                <RefreshCw className={`mr-1.5 h-3.5 w-3.5 ${retryDeliveryMutation.isPending ? 'animate-spin' : ''}`} />
+                Lisans teslimatını yeniden dene
+              </Button>
+            ) : null}
           </CardBody>
         </Card>
       ) : null}

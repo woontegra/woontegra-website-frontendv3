@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import {
   CreditCard,
+  Download,
   KeyRound,
   Mail,
   Monitor,
@@ -26,6 +27,7 @@ import {
   canPurchaseProduct,
   hasValidPrice,
   isWebProductType,
+  isFreeDownloadProduct,
   licenseDisplayLabel,
   productTypeLabel,
   shouldShowQuoteCta,
@@ -33,6 +35,7 @@ import {
 import { SafeImage } from '@/components/ui/SafeImage'
 import { resolveMediaUrl } from '@/lib/resolveMediaUrl'
 import { publicQueryOptions } from '@/lib/publicQueryOptions'
+import { hasPortableFreeDownload, resolvePublicFreeDownloadUrl } from '@/lib/freeProductDownload'
 
 const TYPE_LEAD = {
   DOWNLOAD:
@@ -70,12 +73,21 @@ export function SoftwareDetailPage() {
     .filter(Boolean)
 
   const isWebProduct = data ? isWebProductType(data.productType) : false
+  const isFreeDownload = data ? isFreeDownloadProduct(data) : false
   const canPurchase = data ? canPurchaseProduct(data) : false
   const onSale = data ? hasCompareDiscount(data.price, data.compareAtPrice) : false
 
   const priceDisplay = data
-    ? formatProductDisplayPrice(data.price, data.currency, data.productType, webUsageYears)
+    ? formatProductDisplayPrice(data.price, data.currency, data.productType, webUsageYears, {
+        purchaseEnabled: data.purchaseEnabled,
+      })
     : null
+
+  const freeSetupUrl = data && isFreeDownload ? resolvePublicFreeDownloadUrl(data.slug, 'setup') : null
+  const freePortableUrl =
+    data && isFreeDownload && hasPortableFreeDownload(data.slug)
+      ? resolvePublicFreeDownloadUrl(data.slug, 'portable')
+      : null
 
   const compareDisplay =
     data && onSale
@@ -191,7 +203,10 @@ export function SoftwareDetailPage() {
             <Badge tone="default">{productTypeLabel(data.productType)}</Badge>
             <Badge tone="brand">{licenseDisplayLabel(data)}</Badge>
             {data.isFeatured ? <Badge tone="brand">Öne çıkan</Badge> : null}
-            {data.purchaseEnabled === false ? <Badge tone="warning">Satış kapalı</Badge> : null}
+            {isFreeDownload ? <Badge tone="success">Ücretsiz</Badge> : null}
+            {data.purchaseEnabled === false && !isFreeDownload ? (
+              <Badge tone="warning">Satış kapalı</Badge>
+            ) : null}
             {data.category ? <Badge>{data.category.name}</Badge> : null}
           </div>
 
@@ -209,7 +224,7 @@ export function SoftwareDetailPage() {
             <CardBody className="space-y-4">
               <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-emerald-700">
                 <ShieldCheck className="h-4 w-4" />
-                Satın alma
+                {isFreeDownload ? 'Ücretsiz indirme' : 'Satın alma'}
               </div>
 
               <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
@@ -247,7 +262,7 @@ export function SoftwareDetailPage() {
                 </p>
               ) : null}
 
-              {data.productType === 'DOWNLOAD' && data.hasDownload ? (
+              {data.productType === 'DOWNLOAD' && data.hasDownload && !isFreeDownload ? (
                 <ul className="space-y-1 text-sm leading-relaxed text-slate-600">
                   <li>Ödeme sonrası indirme bilgileri e-posta ile gönderilir.</li>
                   <li>
@@ -279,7 +294,14 @@ export function SoftwareDetailPage() {
                 </div>
               ) : null}
 
-              {!canPurchase ? (
+              {isFreeDownload ? (
+                <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-950">
+                  Ücretsiz Windows aracıdır. Verileriniz bilgisayarınızda kalır; Woontegra sunucularına
+                  gönderilmez.
+                </p>
+              ) : null}
+
+              {!canPurchase && !isFreeDownload ? (
                 <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950">
                   {data.purchaseEnabled === false
                     ? 'Bu yazılım şu anda satın almaya kapalıdır.'
@@ -290,6 +312,24 @@ export function SoftwareDetailPage() {
               ) : null}
 
               <div className="flex flex-wrap gap-3">
+                {isFreeDownload && freeSetupUrl ? (
+                  <>
+                    <a href={freeSetupUrl} className="inline-flex">
+                      <Button className="min-w-[160px]">
+                        <Download className="h-4 w-4" />
+                        Ücretsiz İndir
+                      </Button>
+                    </a>
+                    {freePortableUrl ? (
+                      <a href={freePortableUrl} className="inline-flex">
+                        <Button variant="secondary" className="min-w-[160px]">
+                          <Download className="h-4 w-4" />
+                          Portable İndir
+                        </Button>
+                      </a>
+                    ) : null}
+                  </>
+                ) : null}
                 {canPurchase ? (
                   <Button className="min-w-[160px]" onClick={handleAddToCart}>
                     <ShoppingCart className="h-4 w-4" />

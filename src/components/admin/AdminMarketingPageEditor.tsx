@@ -25,7 +25,7 @@ export function AdminMarketingPageEditor({ value, onChange, showHeroImage = true
         placeholder="Hero açıklama"
       />
       {showHeroImage ? (
-        <ManagedImageField label="Hero görseli" value={value.heroImage} onChange={(heroImage) => patch({ heroImage })} />
+        <ManagedImageField label="Hero görseli" sizeSpec="pageHero" value={value.heroImage} onChange={(heroImage) => patch({ heroImage })} />
       ) : null}
       <div className="grid gap-4 md:grid-cols-2">
         <Input label="Vurgu 1" value={value.highlight1} onChange={(e) => patch({ highlight1: e.target.value })} />

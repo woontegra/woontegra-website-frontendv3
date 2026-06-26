@@ -185,7 +185,8 @@ export function AdminBlogFormPage() {
           <CardBody>
             <ManagedImageField
               label="Kapak görseli"
-              hint="Blog listesi ve blog detay sayfasında gösterilir. Görseli medya kütüphanesinden seçebilir veya yeni dosya yükleyebilirsiniz."
+              hint="Blog listesi ve blog detay sayfasında gösterilir. Medya kütüphanesinden seçebilir veya yeni dosya yükleyebilirsiniz."
+              sizeSpec="blogCover"
               value={form.featuredImage ?? ''}
               onChange={(url) => update('featuredImage', url)}
               previewVariant="wide"

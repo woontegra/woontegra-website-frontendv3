@@ -92,11 +92,13 @@ export function AdminAppearanceSettingsPage() {
             logoUpdatedAt={form.logoUpdatedAt}
             onChange={(url) => setForm((p) => ({ ...p, logo: url }))}
             hint="Header ve footer'da görünür."
+            sizeSpec="siteLogo"
           />
           <SettingsMediaField
             label="Favicon"
             value={form.favicon}
             onChange={(url) => setForm((p) => ({ ...p, favicon: url }))}
+            sizeSpec="favicon"
           />
         </CardBody>
       </Card>

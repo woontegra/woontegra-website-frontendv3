@@ -8,6 +8,7 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { HOME_ICON_OPTIONS } from '@/components/site/home/homeIcons'
 import { getErrorMessage } from '@/services/api/client'
 import { pageContentService } from '@/services/api/pageContent'
+import { imageUploadSizeHint } from '@/constants/imageUploadSpecs'
 import {
   defaultHomePageContent,
   type HomeBrandCard,
@@ -147,7 +148,7 @@ export function AdminHomePage() {
               <SectionToggle enabled={content.hero.enabled} onChange={(enabled) => setContent((c) => ({ ...c, hero: { ...c.hero, enabled } }))} />
               <div className="grid gap-4 md:grid-cols-2">
                 <Input label="Etiket" value={content.hero.tag} onChange={(e) => setContent((c) => ({ ...c, hero: { ...c.hero, tag: e.target.value } }))} />
-                <Input label="Hero görseli" value={content.hero.image} onChange={(e) => setContent((c) => ({ ...c, hero: { ...c.hero, image: e.target.value } }))} />
+                <Input label="Hero görseli" hint={imageUploadSizeHint('homeHero')} value={content.hero.image} onChange={(e) => setContent((c) => ({ ...c, hero: { ...c.hero, image: e.target.value } }))} />
               </div>
               <Input label="Başlık" value={content.hero.title} onChange={(e) => setContent((c) => ({ ...c, hero: { ...c.hero, title: e.target.value } }))} />
               <div className="space-y-1.5">
@@ -495,7 +496,7 @@ function BrandCardEditor({ card, index, cards, setCards }: { card: HomeBrandCard
       </div>
       <div className="grid gap-3 md:grid-cols-2">
         <Input label="Marka adı" value={card.name} onChange={(e) => patch({ name: e.target.value })} />
-        <Input label="Görsel URL" value={card.image} onChange={(e) => patch({ image: e.target.value })} />
+        <Input label="Görsel URL" hint={imageUploadSizeHint('partnerCard')} value={card.image} onChange={(e) => patch({ image: e.target.value })} />
         <Input label="Bağlantı URL" value={card.url} onChange={(e) => patch({ url: e.target.value })} />
       </div>
       <textarea className={`${fieldClass} mt-3`} rows={2} value={card.text} onChange={(e) => patch({ text: e.target.value })} />

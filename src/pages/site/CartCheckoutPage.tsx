@@ -22,6 +22,8 @@ import { mergeCartWithPreview } from '@/lib/cartMerge'
 import { formatMoney } from '@/utils/formatMoney'
 import { checkoutLegalConsentsOk, resolveOrderLegalConsentFlags } from '@/utils/orderLegalRequirements'
 import { isWebProductType } from '@/utils/productPurchase'
+import { TurkeyCityDistrictFields } from '@/components/checkout/TurkeyCityDistrictFields'
+import { matchDistrictName, matchProvinceName } from '@/data/turkeyLocation'
 
 const inputCls =
   'h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100'
@@ -198,8 +200,11 @@ function CartMultiCheckoutPage() {
         companyName: form.companyName.trim() || undefined,
         taxOffice: form.taxOffice.trim() || undefined,
         taxNumber: form.taxNumber.trim() || undefined,
-        deliveryCity: form.deliveryCity.trim() || undefined,
-        deliveryDistrict: form.deliveryDistrict.trim() || undefined,
+        deliveryCity: matchProvinceName(form.deliveryCity) || form.deliveryCity.trim() || undefined,
+        deliveryDistrict:
+          matchDistrictName(form.deliveryCity, form.deliveryDistrict) ||
+          form.deliveryDistrict.trim() ||
+          undefined,
         deliveryLine: form.deliveryLine.trim() || undefined,
         acceptPreInfo: acceptPre,
         acceptDistanceSales: acceptDistance,
@@ -330,8 +335,14 @@ function CartMultiCheckoutPage() {
               </div>
             ) : null}
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              <Input label="İl" value={form.deliveryCity} onChange={(e) => setForm((f) => ({ ...f, deliveryCity: e.target.value }))} />
-              <Input label="İlçe" value={form.deliveryDistrict} onChange={(e) => setForm((f) => ({ ...f, deliveryDistrict: e.target.value }))} />
+              <TurkeyCityDistrictFields
+                idPrefix="cart-checkout"
+                city={form.deliveryCity}
+                district={form.deliveryDistrict}
+                onCityChange={(deliveryCity) => setForm((f) => ({ ...f, deliveryCity }))}
+                onDistrictChange={(deliveryDistrict) => setForm((f) => ({ ...f, deliveryDistrict }))}
+                selectClassName={inputCls}
+              />
             </div>
             <Input
               className="mt-4"

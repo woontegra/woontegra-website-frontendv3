@@ -55,6 +55,7 @@ export function AdminNavigationMenuPage() {
   const [publicItems, setPublicItems] = useState<PublicNavigationMenuItem[]>([])
   const [categories, setCategories] = useState<ProductCategory[]>([])
   const [seeding, setSeeding] = useState(false)
+  const [reordering, setReordering] = useState(false)
 
   const tree = useMemo(() => buildMenuTree(items), [items])
   const dbComplete = useMemo(() => isAdminNavigationComplete(items), [items])
@@ -252,27 +253,50 @@ export function AdminNavigationMenuPage() {
     }
   }
 
+  const reorderSiblings = async (parentId: string | null, orderedIds: string[]) => {
+    const siblings = items.filter((i) => (i.parentId ?? null) === parentId)
+    if (orderedIds.length !== siblings.length) return
+
+    setReordering(true)
+    const sortOrderById = new Map(orderedIds.map((id, idx) => [id, idx]))
+    const nextItems = items.map((item) => {
+      const next = sortOrderById.get(item.id)
+      return next !== undefined ? { ...item, sortOrder: next } : item
+    })
+    setItems(nextItems)
+
+    try {
+      await Promise.all(
+        orderedIds.map((id, idx) => {
+          const prev = siblings.find((s) => s.id === id)
+          if (!prev || prev.sortOrder === idx) return Promise.resolve()
+          return navigationMenuService.update(id, { sortOrder: idx })
+        }),
+      )
+      void queryClient.invalidateQueries({ queryKey: ['public', 'navigation-menu'] })
+      setSuccessMessage('Menü sırası güncellendi.')
+    } catch (err) {
+      setError(getErrorMessage(err, 'Sıra güncellenemedi'))
+      await load()
+    } finally {
+      setReordering(false)
+    }
+  }
+
   const moveItem = async (row: AdminNavigationMenuItem, direction: -1 | 1) => {
+    const parentId = row.parentId ?? null
     const siblings = items
-      .filter((i) => (i.parentId ?? null) === (row.parentId ?? null))
+      .filter((i) => (i.parentId ?? null) === parentId)
       .slice()
       .sort(sortMenuRows)
     const index = siblings.findIndex((i) => i.id === row.id)
     const swapIndex = index + direction
     if (index < 0 || swapIndex < 0 || swapIndex >= siblings.length) return
-    const a = siblings[index]
-    const b = siblings[swapIndex]
-    try {
-      await Promise.all([
-        navigationMenuService.update(a.id, { sortOrder: b.sortOrder }),
-        navigationMenuService.update(b.id, { sortOrder: a.sortOrder }),
-      ])
-      await load()
-      void queryClient.invalidateQueries({ queryKey: ['public', 'navigation-menu'] })
-      setSuccessMessage('Menü sırası güncellendi.')
-    } catch (err) {
-      setError(getErrorMessage(err, 'Sıra güncellenemedi'))
-    }
+
+    const reordered = siblings.slice()
+    const [removed] = reordered.splice(index, 1)
+    reordered.splice(swapIndex, 0, removed)
+    await reorderSiblings(parentId, reordered.map((s) => s.id))
   }
 
   return (
@@ -325,6 +349,8 @@ export function AdminNavigationMenuPage() {
             onSaveItem={saveItem}
             onRemove={(row) => void remove(row)}
             onMove={(row, dir) => void moveItem(row, dir)}
+            onReorderSiblings={(parentId, orderedIds) => void reorderSiblings(parentId, orderedIds)}
+            reordering={reordering}
             onSaveMenu={saveMenu}
             menuSaving={menuSaving}
           />

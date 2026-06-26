@@ -10,6 +10,7 @@ import { formatMoney, hasCompareDiscount } from '@/utils/formatMoney'
 import {
   buildCartSnapshot,
   canPurchaseProduct,
+  isFreeDownloadProduct,
   productTypeLabel,
   shouldShowQuoteCta,
 } from '@/utils/productPurchase'
@@ -29,11 +30,13 @@ export function ProductCard({ product }: Props) {
   const [added, setAdded] = useState(false)
   const onSale = hasCompareDiscount(product.price, product.compareAtPrice)
   const canPurchase = canPurchaseProduct(product)
+  const isFreeDownload = isFreeDownloadProduct(product)
   const showQuote = shouldShowQuoteCta(product)
   const licenseNote = licenseListNote(product)
   const detailHref = `/yazilimlar/${product.slug}`
   const teklifHref = `/iletisim?konu=${encodeURIComponent(`Teklif: ${product.name}`)}`
   const hasPrice = Number.isFinite(product.price) && product.price > 0
+  const showFreeLabel = isFreeDownload
 
   useEffect(() => {
     if (!added) return
@@ -83,7 +86,9 @@ export function ProductCard({ product }: Props) {
         </div>
 
         <div className="flex flex-wrap items-baseline gap-2 border-t border-slate-100 pt-3">
-          {hasPrice ? (
+          {showFreeLabel ? (
+            <p className="text-xl font-bold text-emerald-700">Ücretsiz</p>
+          ) : hasPrice ? (
             <>
               <p className="text-xl font-bold text-slate-900">{formatMoney(product.price, product.currency)}</p>
               {onSale ? (
@@ -97,10 +102,10 @@ export function ProductCard({ product }: Props) {
           )}
         </div>
 
-        <div className={cn('grid gap-2', canPurchase || showQuote ? 'grid-cols-2' : 'grid-cols-1')}>
+        <div className={cn('grid gap-2', canPurchase || showQuote || isFreeDownload ? 'grid-cols-2' : 'grid-cols-1')}>
           <Link to={detailHref}>
             <Button variant="secondary" size="sm" className="w-full">
-              Detay İncele
+              {isFreeDownload ? 'Detay & İndir' : 'Detay İncele'}
             </Button>
           </Link>
           {canPurchase ? (

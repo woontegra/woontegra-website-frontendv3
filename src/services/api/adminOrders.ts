@@ -52,6 +52,10 @@ export const adminOrdersService = {
   ): Promise<void> {
     await adminApi.patch(`/admin/orders/${encodeURIComponent(orderId)}/licenses/${encodeURIComponent(licenseId)}`, body)
   },
+
+  async retryDelivery(id: string): Promise<void> {
+    await adminApi.post(`/admin/orders/${encodeURIComponent(id)}/retry-delivery`)
+  },
 }
 
 export type { AdminOrderListParams, AdminOrderListItem, AdminOrderDetail }

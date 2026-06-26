@@ -11,6 +11,7 @@ export function hasValidPrice(product: Pick<PublicProductListItem, 'price'>): bo
 }
 
 export function canPurchaseProduct(product: ProductPurchaseFields): boolean {
+  if (isFreeDownloadProduct(product)) return false
   if (product.purchaseEnabled === false) return false
   if (!hasValidPrice(product)) return false
   return (
@@ -20,8 +21,18 @@ export function canPurchaseProduct(product: ProductPurchaseFields): boolean {
   )
 }
 
-/** Teklif CTA yalnızca satış kapalı veya fiyatsız ürünlerde gösterilir. */
+/** Ücretsiz indirilebilir masaüstü ürün (satış kapalı, fiyat 0). */
+export function isFreeDownloadProduct(product: ProductPurchaseFields): boolean {
+  return (
+    product.productType === 'DOWNLOAD' &&
+    product.purchaseEnabled === false &&
+    !hasValidPrice(product)
+  )
+}
+
+/** Teklif CTA yalnızca satış kapalı veya fiyatsız ürünlerde gösterilir (ücretsiz indirme hariç). */
 export function shouldShowQuoteCta(product: ProductPurchaseFields): boolean {
+  if (isFreeDownloadProduct(product)) return false
   if (product.purchaseEnabled === false) return true
   return !hasValidPrice(product)
 }

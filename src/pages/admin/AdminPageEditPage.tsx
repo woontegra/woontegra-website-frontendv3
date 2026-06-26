@@ -191,6 +191,7 @@ export function AdminPageEditPage() {
               />
               <ManagedImageField
                 label="Hero görseli"
+                sizeSpec="pageHero"
                 value={contact.heroImage ?? ''}
                 onChange={(heroImage) => setContact((p) => ({ ...p, heroImage }))}
               />

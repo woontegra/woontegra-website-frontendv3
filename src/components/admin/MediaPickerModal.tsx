@@ -6,17 +6,20 @@ import { LoadingState } from '@/components/ui/LoadingState'
 import { catalogMediaService } from '@/services/api/catalogMedia'
 import { getErrorMessage } from '@/services/api/client'
 import type { CatalogMedia, CatalogMediaFileType } from '@/types/catalogMedia'
+import { ImageUploadSizeNote } from '@/components/admin/ImageUploadSizeNote'
+import type { ImageUploadSpecKey } from '@/constants/imageUploadSpecs'
 import { resolveCatalogMediaPreviewUrl } from '@/lib/resolveCatalogMediaPreviewUrl'
 
 type Props = {
   open: boolean
   title: string
   allowedTypes: CatalogMediaFileType[]
+  imageSizeSpec?: ImageUploadSpecKey
   onClose: () => void
   onSelect: (media: CatalogMedia) => void
 }
 
-export function MediaPickerModal({ open, title, allowedTypes, onClose, onSelect }: Props) {
+export function MediaPickerModal({ open, title, allowedTypes, imageSizeSpec, onClose, onSelect }: Props) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [items, setItems] = useState<CatalogMedia[]>([])
   const [loading, setLoading] = useState(false)
@@ -91,15 +94,20 @@ export function MediaPickerModal({ open, title, allowedTypes, onClose, onSelect 
           </button>
         </div>
 
-        <div className="flex items-center justify-between gap-2 border-b border-slate-100 px-4 py-2">
-          <p className="text-xs text-slate-500">Katalog medya: /api/admin/media</p>
-          <div>
-            <input ref={inputRef} type="file" className="hidden" onChange={onUpload} />
-            <Button type="button" variant="secondary" size="sm" disabled={uploading} onClick={() => inputRef.current?.click()}>
-              <Upload className="h-4 w-4" />
-              {uploading ? 'Yükleniyor…' : 'Yükle'}
-            </Button>
+        <div className="border-b border-slate-100 px-4 py-2">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-xs text-slate-500">Katalog medya: /api/admin/media</p>
+            <div>
+              <input ref={inputRef} type="file" className="hidden" onChange={onUpload} />
+              <Button type="button" variant="secondary" size="sm" disabled={uploading} onClick={() => inputRef.current?.click()}>
+                <Upload className="h-4 w-4" />
+                {uploading ? 'Yükleniyor…' : 'Yükle'}
+              </Button>
+            </div>
           </div>
+          {allowedTypes.includes('IMAGE') ? (
+            <ImageUploadSizeNote spec={imageSizeSpec ?? 'mediaGeneral'} className="mt-2" />
+          ) : null}
         </div>
 
         <div className="min-h-0 flex-1 overflow-auto p-4">

@@ -106,7 +106,7 @@ export function AdminSolutionEditPage() {
               onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
             />
           </div>
-          <ManagedImageField label="Logo / görsel" value={form.logo ?? ''} onChange={(url) => setForm((f) => ({ ...f, logo: url }))} />
+          <ManagedImageField label="Logo / görsel" sizeSpec="solutionHero" value={form.logo ?? ''} onChange={(url) => setForm((f) => ({ ...f, logo: url }))} />
           <Input label="Dış site URL" value={form.externalUrl ?? ''} onChange={(e) => setForm((f) => ({ ...f, externalUrl: e.target.value }))} />
           <Input label="SEO başlık" value={form.seoTitle} onChange={(e) => setForm((f) => ({ ...f, seoTitle: e.target.value }))} />
           <Input label="SEO açıklama" value={form.seoDescription} onChange={(e) => setForm((f) => ({ ...f, seoDescription: e.target.value }))} />

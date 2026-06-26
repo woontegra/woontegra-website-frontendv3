@@ -208,6 +208,7 @@ export function AdminServiceEditPage() {
               </div>
               <ManagedImageField
                 label="Hero görseli"
+                sizeSpec="pageHero"
                 value={form.hero.image}
                 onChange={(url) => setForm((f) => ({ ...f, hero: { ...f.hero, image: url } }))}
               />

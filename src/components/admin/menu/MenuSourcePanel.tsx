@@ -75,9 +75,11 @@ export function MenuSourcePanel({ adding, onAddBatch }: Props) {
           ...cms,
         ])
       }),
-      adminProductsService.list({ isActive: 'all' }).then((rows) =>
+      adminProductsService.list({ isActive: 'true' }).then((rows) =>
         setProducts(
-          rows.map((p) => ({
+          rows
+            .filter((p) => p.isActive)
+            .map((p) => ({
             id: p.id,
             label: p.name,
             path: productPublicPath(p.slug),

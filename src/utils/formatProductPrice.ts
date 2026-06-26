@@ -23,7 +23,16 @@ export function formatProductDisplayPrice(
   currency: string,
   productType: ProductType,
   webYears = 1,
+  options?: { purchaseEnabled?: boolean },
 ): { main: string; period: string; hint: string | null } {
+  const isFreeTool =
+    productType === 'DOWNLOAD' &&
+    options?.purchaseEnabled === false &&
+    (!Number.isFinite(price) || price <= 0)
+  if (isFreeTool) {
+    return { main: 'Ücretsiz', period: '', hint: null }
+  }
+
   const isWeb = productType === 'SAAS' || productType === 'SERVICE'
   if (isWeb && webYears > 1) {
     const total = saasTotalForYears(price, webYears)

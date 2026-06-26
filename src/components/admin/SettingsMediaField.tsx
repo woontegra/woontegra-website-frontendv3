@@ -3,6 +3,8 @@ import { ImageIcon } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { MediaPickerModal } from '@/components/admin/MediaPickerModal'
+import type { ImageUploadSpecKey } from '@/constants/imageUploadSpecs'
+import { imageUploadSizeHint, mergeImageHints } from '@/constants/imageUploadSpecs'
 import type { CatalogMedia } from '@/types/catalogMedia'
 import { DEFAULT_HEADER_LOGO_PATH } from '@/data/siteLogo'
 import { buildBrandedAssetUrl } from '@/utils/mediaUrl'
@@ -13,15 +15,18 @@ type Props = {
   logoUpdatedAt?: string
   onChange: (url: string) => void
   hint?: string
+  sizeSpec?: ImageUploadSpecKey
 }
 
-export function SettingsMediaField({ label, value, logoUpdatedAt, onChange, hint }: Props) {
+export function SettingsMediaField({ label, value, logoUpdatedAt, onChange, hint, sizeSpec }: Props) {
   const [pickerOpen, setPickerOpen] = useState(false)
   const preview = buildBrandedAssetUrl(value, logoUpdatedAt)
 
   const onSelect = (media: CatalogMedia) => {
     onChange(media.url)
   }
+
+  const displayHint = mergeImageHints(hint, sizeSpec ? imageUploadSizeHint(sizeSpec) : undefined)
 
   return (
     <div className="space-y-3">
@@ -42,7 +47,7 @@ export function SettingsMediaField({ label, value, logoUpdatedAt, onChange, hint
         </div>
         <div className="min-w-0 flex-1 space-y-2">
           <p className="text-sm font-medium text-slate-900">{label}</p>
-          {hint ? <p className="text-xs text-slate-500">{hint}</p> : null}
+          {displayHint ? <p className="text-xs leading-relaxed text-slate-500">{displayHint}</p> : null}
           <div className="flex flex-wrap gap-2">
             <Button type="button" variant="secondary" size="sm" onClick={() => setPickerOpen(true)}>
               Medyadan seç
@@ -65,6 +70,7 @@ export function SettingsMediaField({ label, value, logoUpdatedAt, onChange, hint
         open={pickerOpen}
         title={`${label} seç`}
         allowedTypes={['IMAGE']}
+        imageSizeSpec={sizeSpec}
         onClose={() => setPickerOpen(false)}
         onSelect={onSelect}
       />

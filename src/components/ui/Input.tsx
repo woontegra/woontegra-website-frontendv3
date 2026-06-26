@@ -3,11 +3,12 @@ import { cn } from '@/utils/cn'
 
 type Props = InputHTMLAttributes<HTMLInputElement> & {
   label?: string
+  hint?: string
   error?: string
 }
 
 export const Input = forwardRef<HTMLInputElement, Props>(function Input(
-  { className, label, error, id, ...props },
+  { className, label, hint, error, id, ...props },
   ref,
 ) {
   const inputId = id || props.name
@@ -18,6 +19,7 @@ export const Input = forwardRef<HTMLInputElement, Props>(function Input(
           {label}
         </label>
       ) : null}
+      {hint ? <p className="text-xs text-slate-500">{hint}</p> : null}
       <input
         ref={ref}
         id={inputId}

@@ -11,6 +11,7 @@ import { catalogMediaService } from '@/services/api/catalogMedia'
 import { getErrorMessage } from '@/services/api/client'
 import type { CatalogMedia } from '@/types/catalogMedia'
 import { resolveCatalogMediaPreviewUrl } from '@/lib/resolveCatalogMediaPreviewUrl'
+import { ImageUploadGuidePanel } from '@/components/admin/ImageUploadSizeNote'
 
 export function AdminMediaLibraryPage() {
   const queryClient = useQueryClient()
@@ -76,6 +77,8 @@ export function AdminMediaLibraryPage() {
           </CardBody>
         </Card>
       ) : null}
+
+      <ImageUploadGuidePanel />
 
       {isLoading ? <LoadingState label="Medya yükleniyor…" /> : null}
 
