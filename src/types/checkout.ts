@@ -14,6 +14,8 @@ export type CreateOrderBody = {
   billingType?: string
   taxOffice?: string
   taxNumber?: string
+  /** Bireysel fatura — Order.taxNumber alanına kaydedilir */
+  identityNumber?: string
   companyName?: string
   deliveryCity?: string
   deliveryDistrict?: string

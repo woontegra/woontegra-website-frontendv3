@@ -12,6 +12,7 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { Table, TBody, TD, TH, THead, TR } from '@/components/ui/Table'
 import { CentralLicenseInfoBanner } from '@/components/admin/CentralLicenseInfoBanner'
 import { CENTRAL_LICENSE_PENDING_ADMIN } from '@/constants/centralLicenseServer'
+import { isIndividualBillingType } from '@/utils/checkoutBilling'
 import { adminOrdersService } from '@/services/api/adminOrders'
 import { getErrorMessage } from '@/services/api/client'
 import { formatMoney } from '@/utils/formatMoney'
@@ -183,7 +184,19 @@ export function AdminOrderDetailPage() {
             <InfoRow label="E-posta" value={data.customer.customerEmail} />
             <InfoRow label="Telefon" value={data.customer.customerPhone ?? '—'} />
             <InfoRow label="Fatura tipi" value={data.customer.billingType ?? '—'} />
+            {isIndividualBillingType(data.customer.billingType) ? (
+              <InfoRow
+                label="T.C. Kimlik No"
+                value={data.customer.taxNumber?.trim() || 'Belirtilmedi'}
+              />
+            ) : null}
             {data.customer.companyName ? <InfoRow label="Firma" value={data.customer.companyName} /> : null}
+            {!isIndividualBillingType(data.customer.billingType) && data.customer.taxOffice ? (
+              <InfoRow label="Vergi dairesi" value={data.customer.taxOffice} />
+            ) : null}
+            {!isIndividualBillingType(data.customer.billingType) && data.customer.taxNumber ? (
+              <InfoRow label="Vergi no" value={data.customer.taxNumber} />
+            ) : null}
           </CardBody>
         </Card>
 

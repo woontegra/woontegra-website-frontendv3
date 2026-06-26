@@ -10,6 +10,7 @@ export type CheckoutLegalFormInput = {
   companyName: string
   taxOffice: string
   taxNumber: string
+  identityNumber: string
   deliveryCity: string
   deliveryDistrict: string
   deliveryLine: string
@@ -51,8 +52,8 @@ export function buildCheckoutLegalPreviewVariables(input: {
     invoiceType: pick(form.billingType),
     companyName: pick(form.companyName),
     taxOffice: pick(form.taxOffice),
-    taxNumber: pick(form.taxNumber),
-    identityNumber: pick(form.taxNumber),
+    taxNumber: pick(form.billingType === 'Kurumsal' ? form.taxNumber : form.identityNumber),
+    identityNumber: pick(form.identityNumber),
     city: pick(form.deliveryCity),
     district: pick(form.deliveryDistrict),
     addressLine: pick(form.deliveryLine),

@@ -23,7 +23,9 @@ import { formatMoney } from '@/utils/formatMoney'
 import { checkoutLegalConsentsOk, resolveOrderLegalConsentFlags } from '@/utils/orderLegalRequirements'
 import { isSaasSubscriptionProduct } from '@/utils/productPurchase'
 import { TurkeyCityDistrictFields } from '@/components/checkout/TurkeyCityDistrictFields'
+import { BillingIdentityNumberField } from '@/components/checkout/BillingIdentityNumberField'
 import { matchDistrictName, matchProvinceName } from '@/data/turkeyLocation'
+import { resolveCheckoutTaxNumber, validateCheckoutBilling } from '@/utils/checkoutBilling'
 
 const inputCls =
   'h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100'
@@ -136,6 +138,7 @@ function CartMultiCheckoutPage() {
     companyName: '',
     taxOffice: '',
     taxNumber: '',
+    identityNumber: '',
     deliveryCity: '',
     deliveryDistrict: '',
     deliveryLine: '',
@@ -152,6 +155,7 @@ function CartMultiCheckoutPage() {
   const [explicitConsent, setExplicitConsent] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
+  const [identityNumberError, setIdentityNumberError] = useState<string | null>(null)
   const [iframeToken, setIframeToken] = useState<string | null>(null)
   const [orderNo, setOrderNo] = useState<string | null>(null)
 
@@ -179,6 +183,12 @@ function CartMultiCheckoutPage() {
       setFormError('Ad soyad ve e-posta zorunludur.')
       return
     }
+    const billingErr = validateCheckoutBilling(form)
+    if (billingErr) {
+      setIdentityNumberError(billingErr)
+      setFormError(billingErr)
+      return
+    }
     if (!legalOk) {
       setFormError('Devam etmek için zorunlu sözleşme onaylarını işaretleyin.')
       return
@@ -199,7 +209,8 @@ function CartMultiCheckoutPage() {
         billingType: form.billingType || undefined,
         companyName: form.companyName.trim() || undefined,
         taxOffice: form.taxOffice.trim() || undefined,
-        taxNumber: form.taxNumber.trim() || undefined,
+        taxNumber: resolveCheckoutTaxNumber(form),
+        identityNumber: form.billingType === 'Bireysel' ? form.identityNumber.trim() || undefined : undefined,
         deliveryCity: matchProvinceName(form.deliveryCity) || form.deliveryCity.trim() || undefined,
         deliveryDistrict:
           matchDistrictName(form.deliveryCity, form.deliveryDistrict) ||
@@ -313,12 +324,16 @@ function CartMultiCheckoutPage() {
                 <label className="block text-sm font-medium text-slate-700">Fatura tipi</label>
                 <select
                   value={form.billingType}
-                  onChange={(e) =>
+                  onChange={(e) => {
+                    const billingType = e.target.value as '' | 'Bireysel' | 'Kurumsal'
                     setForm((f) => ({
                       ...f,
-                      billingType: e.target.value as '' | 'Bireysel' | 'Kurumsal',
+                      billingType,
+                      ...(billingType === 'Kurumsal' ? { identityNumber: '' } : {}),
+                      ...(billingType === 'Bireysel' ? { companyName: '', taxOffice: '', taxNumber: '' } : {}),
                     }))
-                  }
+                    setIdentityNumberError(null)
+                  }}
                   className={inputCls}
                 >
                   <option value="">Seçin</option>
@@ -327,11 +342,21 @@ function CartMultiCheckoutPage() {
                 </select>
               </div>
             </div>
+            {form.billingType === 'Bireysel' ? (
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                <BillingIdentityNumberField
+                  value={form.identityNumber}
+                  onChange={(identityNumber) => setForm((f) => ({ ...f, identityNumber }))}
+                  error={identityNumberError}
+                  onErrorChange={setIdentityNumberError}
+                />
+              </div>
+            ) : null}
             {form.billingType === 'Kurumsal' ? (
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
                 <Input label="Firma adı" value={form.companyName} onChange={(e) => setForm((f) => ({ ...f, companyName: e.target.value }))} />
                 <Input label="Vergi dairesi" value={form.taxOffice} onChange={(e) => setForm((f) => ({ ...f, taxOffice: e.target.value }))} />
-                <Input label="Vergi no / TCKN" value={form.taxNumber} onChange={(e) => setForm((f) => ({ ...f, taxNumber: e.target.value }))} />
+                <Input label="Vergi no" value={form.taxNumber} onChange={(e) => setForm((f) => ({ ...f, taxNumber: e.target.value }))} />
               </div>
             ) : null}
             <div className="mt-4 grid gap-4 sm:grid-cols-2">

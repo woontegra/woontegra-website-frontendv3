@@ -37,7 +37,9 @@ import {
 } from '@/utils/productPurchase'
 import { productCoverUrl } from '@/utils/mediaUrl'
 import { TurkeyCityDistrictFields } from '@/components/checkout/TurkeyCityDistrictFields'
+import { BillingIdentityNumberField } from '@/components/checkout/BillingIdentityNumberField'
 import { matchDistrictName, matchProvinceName } from '@/data/turkeyLocation'
+import { resolveCheckoutTaxNumber, validateCheckoutBilling } from '@/utils/checkoutBilling'
 
 type PaymentMethod = 'PAYTR' | 'BANK_TRANSFER'
 
@@ -60,6 +62,7 @@ export function ProductCheckoutPage() {
     companyName: '',
     taxOffice: '',
     taxNumber: '',
+    identityNumber: '',
     deliveryCity: '',
     deliveryDistrict: '',
     deliveryLine: '',
@@ -76,6 +79,7 @@ export function ProductCheckoutPage() {
   const [explicitConsent, setExplicitConsent] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
+  const [identityNumberError, setIdentityNumberError] = useState<string | null>(null)
   const [iframeToken, setIframeToken] = useState<string | null>(null)
   const [orderNo, setOrderNo] = useState<string | null>(null)
   const [legalModal, setLegalModal] = useState<CheckoutLegalModalId | null>(null)
@@ -202,6 +206,12 @@ export function ProductCheckoutPage() {
       setFormError('Ad soyad ve e-posta zorunludur.')
       return
     }
+    const billingErr = validateCheckoutBilling(form)
+    if (billingErr) {
+      setIdentityNumberError(billingErr)
+      setFormError(billingErr)
+      return
+    }
     if (!legalOk) {
       setFormError('Devam etmek için zorunlu sözleşme onaylarını işaretleyin.')
       return
@@ -222,7 +232,8 @@ export function ProductCheckoutPage() {
         billingType: form.billingType || undefined,
         companyName: form.companyName.trim() || undefined,
         taxOffice: form.taxOffice.trim() || undefined,
-        taxNumber: form.taxNumber.trim() || undefined,
+        taxNumber: resolveCheckoutTaxNumber(form),
+        identityNumber: form.billingType === 'Bireysel' ? form.identityNumber.trim() || undefined : undefined,
         deliveryCity: matchProvinceName(form.deliveryCity) || form.deliveryCity.trim() || undefined,
         deliveryDistrict:
           matchDistrictName(form.deliveryCity, form.deliveryDistrict) ||
@@ -362,12 +373,16 @@ export function ProductCheckoutPage() {
                   <label className="block text-sm font-medium text-slate-700">Fatura tipi</label>
                   <select
                     value={form.billingType}
-                    onChange={(e) =>
+                    onChange={(e) => {
+                      const billingType = e.target.value as '' | 'Bireysel' | 'Kurumsal'
                       setForm((f) => ({
                         ...f,
-                        billingType: e.target.value as '' | 'Bireysel' | 'Kurumsal',
+                        billingType,
+                        ...(billingType === 'Kurumsal' ? { identityNumber: '' } : {}),
+                        ...(billingType === 'Bireysel' ? { companyName: '', taxOffice: '', taxNumber: '' } : {}),
                       }))
-                    }
+                      setIdentityNumberError(null)
+                    }}
                     className={inputCls}
                   >
                     <option value="">Seçin</option>
@@ -376,6 +391,16 @@ export function ProductCheckoutPage() {
                   </select>
                 </div>
               </div>
+              {form.billingType === 'Bireysel' ? (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <BillingIdentityNumberField
+                    value={form.identityNumber}
+                    onChange={(identityNumber) => setForm((f) => ({ ...f, identityNumber }))}
+                    error={identityNumberError}
+                    onErrorChange={setIdentityNumberError}
+                  />
+                </div>
+              ) : null}
               {form.billingType === 'Kurumsal' ? (
                 <div className="grid gap-4 sm:grid-cols-2">
                   <Input
@@ -389,7 +414,7 @@ export function ProductCheckoutPage() {
                     onChange={(e) => setForm((f) => ({ ...f, taxOffice: e.target.value }))}
                   />
                   <Input
-                    label="Vergi no / TCKN"
+                    label="Vergi no"
                     value={form.taxNumber}
                     onChange={(e) => setForm((f) => ({ ...f, taxNumber: e.target.value }))}
                   />
