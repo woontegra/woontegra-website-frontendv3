@@ -5,6 +5,7 @@ import {
   presetShowsDownloadFields,
   type AdminProductPresetId,
 } from '@/constants/adminProductPresets'
+import { hasConfiguredDownloadFiles } from '@/lib/productDownloadFiles'
 
 export type ProductFormTabId = 'basic' | 'pricing' | 'delivery' | 'media' | 'seo'
 
@@ -44,9 +45,21 @@ export function validateAdminProductForm(
   }
 
   if (presetShowsDownloadFields(presetId) && onSale) {
-    const hasDelivery = Boolean(form.downloadMediaId) || Boolean((form.downloadUrl ?? '').trim())
+    const hasDelivery =
+      Boolean(form.downloadMediaId) ||
+      Boolean((form.downloadUrl ?? '').trim()) ||
+      hasConfiguredDownloadFiles(form.downloadFiles ?? undefined)
     if (!hasDelivery) {
-      return 'Dijital teslimat için medyadan dosya seçin veya alternatif indirme adresi girin.'
+      return 'Dijital teslimat için medyadan dosya seçin, R2 indirme dosyası ekleyin veya alternatif indirme adresi girin.'
+    }
+  }
+
+  if (presetId === 'FREE_TOOL' && form.isActive && form.downloadFiles?.publicFreeDownload !== false) {
+    const hasR2 = hasConfiguredDownloadFiles(form.downloadFiles ?? undefined)
+    const hasLegacy =
+      Boolean(form.downloadMediaId) || Boolean((form.downloadUrl ?? '').trim())
+    if (!hasR2 && !hasLegacy) {
+      return 'Ücretsiz araç için en az bir R2 indirme URL’si girin.'
     }
   }
 
@@ -78,7 +91,11 @@ export function tabForValidationError(message: string): ProductFormTabId {
 }
 
 export function hasDigitalDelivery(form: AdminProductInput): boolean {
-  return Boolean(form.downloadMediaId) || Boolean((form.downloadUrl ?? '').trim())
+  return (
+    Boolean(form.downloadMediaId) ||
+    Boolean((form.downloadUrl ?? '').trim()) ||
+    hasConfiguredDownloadFiles(form.downloadFiles ?? undefined)
+  )
 }
 
 export function isReadyForSale(form: AdminProductInput, presetId?: AdminProductPresetId): boolean {

@@ -15,6 +15,8 @@ import { adminProductsService, getErrorMessage } from '@/services/api/adminProdu
 import type { AdminProduct } from '@/types/product'
 import { formatMoney } from '@/utils/formatMoney'
 
+import { hasConfiguredDownloadFiles } from '@/lib/productDownloadFiles'
+
 function formatDate(value: string): string {
   if (!value) return '—'
   const date = new Date(value)
@@ -23,7 +25,14 @@ function formatDate(value: string): string {
 }
 
 function hasDigitalDelivery(item: AdminProduct): boolean {
-  return Boolean(item.downloadMediaId || item.downloadUrl?.trim() || item.downloadMedia?.url)
+  return (
+    Boolean(item.downloadMediaId || item.downloadUrl?.trim() || item.downloadMedia?.url) ||
+    hasConfiguredDownloadFiles(item.downloadFiles ?? undefined)
+  )
+}
+
+function hasR2DownloadFiles(item: AdminProduct): boolean {
+  return hasConfiguredDownloadFiles(item.downloadFiles ?? undefined)
 }
 
 function hasCoverImage(item: AdminProduct): boolean {
@@ -34,8 +43,7 @@ function isFreeDownloadProduct(item: AdminProduct): boolean {
   return (
     item.productType === 'DOWNLOAD' &&
     !item.purchaseEnabled &&
-    (!Number.isFinite(item.price) || item.price <= 0) &&
-    hasDigitalDelivery(item)
+    (!Number.isFinite(item.price) || item.price <= 0)
   )
 }
 
@@ -168,6 +176,26 @@ export function AdminProductListPage() {
                           Öne çıkan
                         </Badge>
                       ) : null}
+                      {isFreeDownloadProduct(item) ? (
+                        <Badge tone="success" className="ml-1">
+                          Ücretsiz
+                        </Badge>
+                      ) : null}
+                      {hasR2DownloadFiles(item) ? (
+                        <Badge tone="brand" className="ml-1">
+                          R2 indirme
+                        </Badge>
+                      ) : null}
+                      {item.isActive ? (
+                        <Badge tone="success" className="ml-1">
+                          Aktif
+                        </Badge>
+                      ) : null}
+                      {!item.licenseRequired ? (
+                        <Badge tone="default" className="ml-1">
+                          Lisanssız
+                        </Badge>
+                      ) : null}
                     </div>
                   </TD>
                   <TD>{item.category?.name ?? '—'}</TD>
@@ -179,7 +207,9 @@ export function AdminProductListPage() {
                   </TD>
                   <TD>
                     {item.productType === 'DOWNLOAD' ? (
-                      digital ? (
+                      hasR2DownloadFiles(item) ? (
+                        <Badge tone="brand">R2 indirme</Badge>
+                      ) : digital ? (
                         item.deliveryLinkMissing ? (
                           <Badge tone="danger">Eksik / geçersiz</Badge>
                         ) : (

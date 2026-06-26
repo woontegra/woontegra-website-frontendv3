@@ -28,6 +28,7 @@ function licenseListNote(product: PublicProductListItem): string | null {
 
 export function ProductCard({ product }: Props) {
   const [added, setAdded] = useState(false)
+  const [cartMsg, setCartMsg] = useState<string | null>(null)
   const onSale = hasCompareDiscount(product.price, product.compareAtPrice)
   const canPurchase = canPurchaseProduct(product)
   const isFreeDownload = isFreeDownloadProduct(product)
@@ -39,15 +40,24 @@ export function ProductCard({ product }: Props) {
   const showFreeLabel = isFreeDownload
 
   useEffect(() => {
-    if (!added) return
-    const t = window.setTimeout(() => setAdded(false), 2000)
+    if (!added && !cartMsg) return
+    const t = window.setTimeout(() => {
+      setAdded(false)
+      setCartMsg(null)
+    }, 2000)
     return () => window.clearTimeout(t)
-  }, [added])
+  }, [added, cartMsg])
 
   const handleAddToCart = () => {
     if (!canPurchase) return
-    addToCart(product.id, 1, { snapshot: buildCartSnapshot(product) })
-    setAdded(true)
+    const result = addToCart(product.id, 1, { snapshot: buildCartSnapshot(product) })
+    if (result === 'already_in_cart') {
+      setCartMsg('Sepette')
+      setAdded(false)
+    } else {
+      setAdded(true)
+      setCartMsg(null)
+    }
   }
 
   return (
@@ -110,7 +120,7 @@ export function ProductCard({ product }: Props) {
           </Link>
           {canPurchase ? (
             <Button size="sm" className="w-full" onClick={handleAddToCart}>
-              {added ? 'Sepete eklendi' : 'Sepete Ekle'}
+              {cartMsg ?? (added ? 'Sepete eklendi' : 'Sepete Ekle')}
             </Button>
           ) : showQuote ? (
             <Link to={teklifHref}>

@@ -48,6 +48,8 @@ export type CartPreviewRow = {
   currency: string
   coverImage: string | null
   hasDownload: boolean
+  licenseRequired?: boolean
+  singleQuantity?: boolean
   matchKeys?: string[]
 }
 

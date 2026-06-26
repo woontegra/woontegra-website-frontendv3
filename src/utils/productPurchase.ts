@@ -37,12 +37,31 @@ export function shouldShowQuoteCta(product: ProductPurchaseFields): boolean {
   return !hasValidPrice(product)
 }
 
+/** Sepet/checkout adedi her zaman 1 (masaüstü, merkezi lisans, hizmet). */
+export function isSingleQuantityProduct(product: {
+  productType: ProductType
+  licenseRequired?: boolean
+  singleQuantity?: boolean
+}): boolean {
+  if (product.singleQuantity === true) return true
+  if (product.singleQuantity === false) return false
+  if (product.productType === 'SAAS') return false
+  if (product.licenseRequired === true) return true
+  if (product.productType === 'DOWNLOAD') return true
+  if (product.productType === 'SERVICE') return true
+  return false
+}
+
 export function buildCartSnapshot(
   product: Pick<
     PublicProductListItem,
     'name' | 'slug' | 'price' | 'currency' | 'productType' | 'coverImage' | 'licenseMonths'
-  >,
+  > & { licenseRequired?: boolean },
 ): CartSnapshot {
+  const licenseRequired =
+    'licenseRequired' in product && typeof product.licenseRequired === 'boolean'
+      ? product.licenseRequired
+      : undefined
   return {
     name: product.name,
     slug: product.slug,
@@ -51,6 +70,11 @@ export function buildCartSnapshot(
     productType: product.productType,
     coverImage: product.coverImage,
     licenseDurationMonths: product.licenseMonths,
+    licenseRequired,
+    singleQuantity: isSingleQuantityProduct({
+      productType: product.productType,
+      licenseRequired,
+    }),
   }
 }
 
@@ -77,6 +101,11 @@ export function licenseDisplayLabel(product: PublicProductDetail): string {
 
 export function isWebProductType(productType: ProductType): boolean {
   return productType === 'SAAS' || productType === 'SERVICE'
+}
+
+/** Yıllık abonelik fiyatı — yalnızca SaaS. */
+export function isSaasSubscriptionProduct(productType: ProductType): boolean {
+  return productType === 'SAAS'
 }
 
 export function isSaasOrderDeliveryUrl(url: string | null | undefined): boolean {

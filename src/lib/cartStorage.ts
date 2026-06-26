@@ -1,4 +1,5 @@
 import type { ProductType } from '@/types/product'
+import { isSaasSubscriptionProduct, isSingleQuantityProduct } from '@/utils/productPurchase'
 
 const CART_KEY_V1 = 'woontegra_cart_v1'
 const CART_KEY = 'woontegra_cart_v2'
@@ -11,6 +12,8 @@ export type CartSnapshot = {
   productType: ProductType
   coverImage: string | null
   licenseDurationMonths?: number
+  licenseRequired?: boolean
+  singleQuantity?: boolean
 }
 
 export type CartLine = {
@@ -19,12 +22,15 @@ export type CartLine = {
   snapshot?: CartSnapshot
 }
 
+export type AddToCartResult = 'added' | 'already_in_cart'
+
 export function alignCartLinesToCanonicalProductIds(
   lines: CartLine[],
-  preview: { id: string; matchKeys?: string[] }[],
+  preview: { id: string; matchKeys?: string[]; licenseRequired?: boolean; singleQuantity?: boolean }[],
 ): CartLine[] {
   if (preview.length === 0) return lines
   const rawToCanonical = new Map<string, string>()
+  const previewById = new Map(preview.map((p) => [p.id, p]))
   for (const p of preview) {
     rawToCanonical.set(p.id, p.id)
     for (const k of p.matchKeys ?? []) {
@@ -33,8 +39,27 @@ export function alignCartLinesToCanonicalProductIds(
   }
   return lines.map((l) => {
     const cid = rawToCanonical.get(l.productId)
-    if (cid && cid !== l.productId) return { ...l, productId: cid }
-    return l
+    const canonicalId = cid && cid !== l.productId ? cid : l.productId
+    const pv = previewById.get(canonicalId)
+    const snap = l.snapshot
+      ? {
+          ...l.snapshot,
+          licenseRequired: pv?.licenseRequired ?? l.snapshot.licenseRequired,
+          singleQuantity:
+            pv?.singleQuantity ??
+            l.snapshot.singleQuantity ??
+            isSingleQuantityProduct({
+              productType: l.snapshot.productType,
+              licenseRequired: pv?.licenseRequired ?? l.snapshot.licenseRequired,
+            }),
+        }
+      : l.snapshot
+    const line: CartLine = {
+      productId: canonicalId,
+      quantity: l.quantity,
+      snapshot: snap,
+    }
+    return { ...line, quantity: clampQuantity(line, line.quantity) }
   })
 }
 
@@ -43,8 +68,20 @@ export type AddToCartOptions = {
   replaceLine?: boolean
 }
 
+function lineIsSingleQuantity(line: Pick<CartLine, 'snapshot'>): boolean {
+  const snap = line.snapshot
+  if (!snap) return false
+  return isSingleQuantityProduct({
+    productType: snap.productType,
+    licenseRequired: snap.licenseRequired,
+    singleQuantity: snap.singleQuantity,
+  })
+}
+
 export function maxQuantityForLine(line: Pick<CartLine, 'snapshot'>): number {
-  return line.snapshot?.productType === 'SAAS' || line.snapshot?.productType === 'SERVICE' ? 10 : 99
+  if (lineIsSingleQuantity(line)) return 1
+  if (isSaasSubscriptionProduct(line.snapshot?.productType ?? 'DOWNLOAD')) return 10
+  return 99
 }
 
 function clampQuantity(line: Pick<CartLine, 'snapshot'>, q: number): number {
@@ -69,6 +106,11 @@ function parseSnapshot(o: Record<string, unknown>): CartSnapshot | undefined {
   const lm = s.licenseDurationMonths
   const licenseDurationMonths =
     typeof lm === 'number' && Number.isFinite(lm) ? lm : typeof lm === 'string' && lm.trim() ? Number(lm) : undefined
+  const licenseRequired = typeof s.licenseRequired === 'boolean' ? s.licenseRequired : undefined
+  const singleQuantity =
+    typeof s.singleQuantity === 'boolean'
+      ? s.singleQuantity
+      : isSingleQuantityProduct({ productType, licenseRequired })
   return {
     name,
     slug,
@@ -77,6 +119,8 @@ function parseSnapshot(o: Record<string, unknown>): CartSnapshot | undefined {
     productType,
     coverImage,
     licenseDurationMonths: Number.isFinite(licenseDurationMonths) ? licenseDurationMonths : undefined,
+    licenseRequired,
+    singleQuantity,
   }
 }
 
@@ -122,13 +166,30 @@ export function clearCart(): void {
   localStorage.removeItem(CART_KEY_V1)
 }
 
-export function addToCart(productId: string, quantity = 1, options?: AddToCartOptions): void {
+export function isProductInCart(productId: string): boolean {
   const id = productId.trim()
-  if (!id) return
+  return readCart().some((l) => l.productId === id)
+}
+
+export function addToCart(productId: string, quantity = 1, options?: AddToCartOptions): AddToCartResult {
+  const id = productId.trim()
+  if (!id) return 'added'
   const lines = readCart()
   const idx = lines.findIndex((l) => l.productId === id)
   const mergedSnap = idx >= 0 ? options?.snapshot ?? lines[idx].snapshot : options?.snapshot
   const draft: CartLine = { productId: id, quantity: 1, snapshot: mergedSnap }
+  const singleQty = lineIsSingleQuantity(draft)
+
+  if (idx >= 0 && singleQty) {
+    lines[idx] = {
+      productId: id,
+      quantity: 1,
+      snapshot: mergedSnap,
+    }
+    writeCart(lines)
+    window.dispatchEvent(new Event('woontegra-cart'))
+    return 'already_in_cart'
+  }
 
   if (idx >= 0) {
     const replace = options?.replaceLine === true
@@ -141,6 +202,7 @@ export function addToCart(productId: string, quantity = 1, options?: AddToCartOp
   }
   writeCart(lines)
   window.dispatchEvent(new Event('woontegra-cart'))
+  return 'added'
 }
 
 export function setLineQuantity(productId: string, quantity: number): void {

@@ -31,7 +31,7 @@ import {
 } from '@/utils/orderLegalRequirements'
 import {
   canPurchaseProduct,
-  isWebProductType,
+  isSaasSubscriptionProduct,
   licenseDisplayLabel,
   productTypeLabel,
 } from '@/utils/productPurchase'
@@ -87,8 +87,8 @@ export function ProductCheckoutPage() {
   })
 
   const product = productQuery.data
-  const isWeb = product ? isWebProductType(product.productType) : false
-  const quantity = isWeb ? webYears : 1
+  const isSaas = product ? isSaasSubscriptionProduct(product.productType) : false
+  const quantity = isSaas ? webYears : 1
 
   const previewQuery = useQuery({
     queryKey: ['checkout', 'preview', product?.id],
@@ -101,10 +101,10 @@ export function ProductCheckoutPage() {
 
   const unitPrice = previewRow?.price ?? product?.price ?? 0
   const currency = previewRow?.currency ?? product?.currency ?? 'TRY'
-  const lineTotal = isWeb ? saasTotalForYears(unitPrice, webYears) : unitPrice
+  const lineTotal = isSaas ? saasTotalForYears(unitPrice, webYears) : unitPrice
 
   const priceDisplay = product
-    ? formatProductDisplayPrice(unitPrice, currency, product.productType, webYears)
+    ? formatProductDisplayPrice(unitPrice, currency, product.productType, isSaas ? webYears : 1)
     : null
 
   const legalFlags = useMemo(
@@ -547,7 +547,7 @@ export function ProductCheckoutPage() {
                 </div>
               </div>
 
-              {isWeb ? (
+              {isSaas ? (
                 <div className="space-y-1.5">
                   <label className="block text-sm font-medium text-slate-700">Kullanım süresi</label>
                   <select

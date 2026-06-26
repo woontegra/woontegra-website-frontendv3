@@ -114,6 +114,10 @@ export function presetShowsDownloadFields(presetId: AdminProductPresetId): boole
   return presetId === 'DOWNLOADABLE' || presetId === 'LICENSED'
 }
 
+export function presetShowsR2DownloadFields(presetId: AdminProductPresetId): boolean {
+  return presetId === 'FREE_TOOL' || presetId === 'DOWNLOADABLE' || presetId === 'LICENSED'
+}
+
 export function presetShowsLicenseFields(presetId: AdminProductPresetId): boolean {
   return presetId === 'LICENSED' || presetId === 'SAAS'
 }

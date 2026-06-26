@@ -7,6 +7,11 @@ import {
   saleStatusLabel,
   type AdminProductPresetId,
 } from '@/constants/adminProductPresets'
+import {
+  hasConfiguredDownloadFiles,
+  hasPortableDownloadFile,
+  hasSetupDownloadFile,
+} from '@/lib/productDownloadFiles'
 import { formatMoney } from '@/utils/formatMoney'
 import { isReadyForSale } from '@/lib/adminProductForm'
 
@@ -58,6 +63,24 @@ export function ProductFormSummary({ form, presetId, coverPreview }: Props) {
           <div>
             <p className="text-xs text-slate-500">Teslimat tipi</p>
             <p className="font-medium text-slate-900">{deliveryTypeLabel(presetId, form)}</p>
+            <div className="mt-1 flex flex-wrap gap-1">
+              {hasConfiguredDownloadFiles(form.downloadFiles ?? undefined) ? (
+                <Badge tone="brand">R2 indirme: Var</Badge>
+              ) : (
+                <Badge tone="default">R2 indirme: Yok</Badge>
+              )}
+              {hasSetupDownloadFile(form.downloadFiles ?? undefined) ? (
+                <Badge tone="success">Setup dosyası: Var</Badge>
+              ) : (
+                <Badge tone="default">Setup dosyası: Yok</Badge>
+              )}
+              {hasPortableDownloadFile(form.downloadFiles ?? undefined) ? (
+                <Badge tone="success">Portable dosya: Var</Badge>
+              ) : (
+                <Badge tone="default">Portable dosya: Yok</Badge>
+              )}
+              {presetId === 'FREE_TOOL' ? <Badge tone="success">Ücretsiz</Badge> : null}
+            </div>
           </div>
           <div>
             <p className="text-xs text-slate-500">Lisans durumu</p>

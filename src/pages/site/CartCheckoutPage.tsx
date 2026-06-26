@@ -18,10 +18,10 @@ import {
   writeCart,
   type CartLine,
 } from '@/lib/cartStorage'
-import { mergeCartWithPreview } from '@/lib/cartMerge'
+import { mergeCartWithPreview, mergedRowIsSingleQuantity } from '@/lib/cartMerge'
 import { formatMoney } from '@/utils/formatMoney'
 import { checkoutLegalConsentsOk, resolveOrderLegalConsentFlags } from '@/utils/orderLegalRequirements'
-import { isWebProductType } from '@/utils/productPurchase'
+import { isSaasSubscriptionProduct } from '@/utils/productPurchase'
 import { TurkeyCityDistrictFields } from '@/components/checkout/TurkeyCityDistrictFields'
 import { matchDistrictName, matchProvinceName } from '@/data/turkeyLocation'
 
@@ -41,7 +41,7 @@ function CartCheckoutGate() {
     if (lines.length === 1) {
       const snap = lines[0].snapshot
       if (snap?.slug) {
-        const web = isWebProductType(snap.productType)
+        const web = isSaasSubscriptionProduct(snap.productType)
         setRedirectTo(web ? `/satinal/${snap.slug}?y=${lines[0].quantity}` : `/satinal/${snap.slug}`)
         setReady(true)
         return
@@ -55,7 +55,7 @@ function CartCheckoutGate() {
             setReady(true)
             return
           }
-          const web = isWebProductType(row.productType)
+          const web = isSaasSubscriptionProduct(row.productType)
           setRedirectTo(web ? `/satinal/${row.slug}?y=${lines[0].quantity}` : `/satinal/${row.slug}`)
         } catch {
           /* fall through to multi checkout */
@@ -438,7 +438,12 @@ function CartMultiCheckoutPage() {
               {merged.map((m) => (
                 <li key={m.id} className="flex justify-between gap-3 border-b border-slate-100 pb-3">
                   <span className="text-slate-700">
-                    {m.name} × {m.quantity}
+                    {m.name}
+                    {mergedRowIsSingleQuantity(m)
+                      ? ' — 1 lisans'
+                      : isSaasSubscriptionProduct(m.productType)
+                        ? ` × ${m.quantity} yıl`
+                        : ` × ${m.quantity}`}
                   </span>
                   <span className="shrink-0 font-medium text-slate-900">{formatMoney(m.lineTotal, m.currency)}</span>
                 </li>

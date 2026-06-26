@@ -3,7 +3,6 @@ import { Link, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import {
   CreditCard,
-  Download,
   KeyRound,
   Mail,
   Monitor,
@@ -26,8 +25,8 @@ import {
   buildCartSnapshot,
   canPurchaseProduct,
   hasValidPrice,
-  isWebProductType,
   isFreeDownloadProduct,
+  isSaasSubscriptionProduct,
   licenseDisplayLabel,
   productTypeLabel,
   shouldShowQuoteCta,
@@ -35,7 +34,8 @@ import {
 import { SafeImage } from '@/components/ui/SafeImage'
 import { resolveMediaUrl } from '@/lib/resolveMediaUrl'
 import { publicQueryOptions } from '@/lib/publicQueryOptions'
-import { hasPortableFreeDownload, resolvePublicFreeDownloadUrl } from '@/lib/freeProductDownload'
+import { ProductFreeDownloadButton } from '@/components/site/ProductFreeDownloadButton'
+import { getPublicProductDownloadFiles } from '@/lib/freeProductDownload'
 
 const TYPE_LEAD = {
   DOWNLOAD:
@@ -72,26 +72,22 @@ export function SoftwareDetailPage() {
     .map((s) => s.trim())
     .filter(Boolean)
 
-  const isWebProduct = data ? isWebProductType(data.productType) : false
+  const isSaasProduct = data ? isSaasSubscriptionProduct(data.productType) : false
   const isFreeDownload = data ? isFreeDownloadProduct(data) : false
+  const publicDownloadFiles = data ? getPublicProductDownloadFiles(data) : []
   const canPurchase = data ? canPurchaseProduct(data) : false
   const onSale = data ? hasCompareDiscount(data.price, data.compareAtPrice) : false
 
   const priceDisplay = data
-    ? formatProductDisplayPrice(data.price, data.currency, data.productType, webUsageYears, {
+    ? formatProductDisplayPrice(data.price, data.currency, data.productType, isSaasProduct ? webUsageYears : 1, {
         purchaseEnabled: data.purchaseEnabled,
       })
     : null
 
-  const freeSetupUrl = data && isFreeDownload ? resolvePublicFreeDownloadUrl(data.slug, 'setup') : null
-  const freePortableUrl =
-    data && isFreeDownload && hasPortableFreeDownload(data.slug)
-      ? resolvePublicFreeDownloadUrl(data.slug, 'portable')
-      : null
 
   const compareDisplay =
     data && onSale
-      ? isWebProduct && webUsageYears > 1
+      ? isSaasProduct && webUsageYears > 1
         ? formatMoney(data.compareAtPrice! * webUsageYears, data.currency)
         : formatMoney(data.compareAtPrice!, data.currency)
       : null
@@ -114,12 +110,13 @@ export function SoftwareDetailPage() {
   const handleAddToCart = () => {
     if (!data || !canPurchase) return
     const snapshot = buildCartSnapshot(data)
-    if (isWebProduct) {
+    if (isSaasProduct) {
       addToCart(data.id, webUsageYears, { snapshot, replaceLine: true })
-    } else {
-      addToCart(data.id, 1, { snapshot })
+      setToast('Ürün sepete eklendi.')
+      return
     }
-    setToast('Ürün sepete eklendi.')
+    const result = addToCart(data.id, 1, { snapshot, replaceLine: true })
+    setToast(result === 'already_in_cart' ? 'Bu ürün zaten sepetinizde.' : 'Ürün sepete eklendi.')
   }
 
   if (!slug.trim()) {
@@ -250,7 +247,7 @@ export function SoftwareDetailPage() {
                   {data.licenseMaxDevices != null && data.licenseMaxDevices > 0 ? (
                     <li>Cihaz hakkı: {data.licenseMaxDevices}</li>
                   ) : null}
-                  {data.licenseMonths != null && data.licenseMonths > 0 && isWebProduct ? (
+                  {data.licenseMonths != null && data.licenseMonths > 0 && isSaasProduct ? (
                     <li>Abonelik dönemi: {data.licenseMonths} ay / yıl</li>
                   ) : null}
                 </ul>
@@ -274,7 +271,7 @@ export function SoftwareDetailPage() {
                 </ul>
               ) : null}
 
-              {isWebProduct && canPurchase ? (
+              {isSaasProduct && canPurchase ? (
                 <div className="space-y-2">
                   <label htmlFor="web-years" className="block text-sm font-medium text-slate-800">
                     Kullanım süresi
@@ -294,10 +291,10 @@ export function SoftwareDetailPage() {
                 </div>
               ) : null}
 
-              {isFreeDownload ? (
+              {isFreeDownload && !data.licenseRequired ? (
                 <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-950">
                   Ücretsiz Windows aracıdır. Verileriniz bilgisayarınızda kalır; Woontegra sunucularına
-                  gönderilmez.
+                  gönderilmez. Ana şifre unutulursa kayıtlar kurtarılamaz.
                 </p>
               ) : null}
 
@@ -312,24 +309,11 @@ export function SoftwareDetailPage() {
               ) : null}
 
               <div className="flex flex-wrap gap-3">
-                {isFreeDownload && freeSetupUrl ? (
-                  <>
-                    <a href={freeSetupUrl} className="inline-flex">
-                      <Button className="min-w-[160px]">
-                        <Download className="h-4 w-4" />
-                        Ücretsiz İndir
-                      </Button>
-                    </a>
-                    {freePortableUrl ? (
-                      <a href={freePortableUrl} className="inline-flex">
-                        <Button variant="secondary" className="min-w-[160px]">
-                          <Download className="h-4 w-4" />
-                          Portable İndir
-                        </Button>
-                      </a>
-                    ) : null}
-                  </>
-                ) : null}
+                {isFreeDownload && publicDownloadFiles.length > 0
+                  ? publicDownloadFiles.map((file) => (
+                      <ProductFreeDownloadButton key={`${file.type ?? file.label}-${file.downloadPath}`} file={file} />
+                    ))
+                  : null}
                 {canPurchase ? (
                   <Button className="min-w-[160px]" onClick={handleAddToCart}>
                     <ShoppingCart className="h-4 w-4" />

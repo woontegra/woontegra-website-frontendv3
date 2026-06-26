@@ -10,12 +10,14 @@ import { LoadingState } from '@/components/ui/LoadingState'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { CentralLicenseInfoBanner } from '@/components/admin/CentralLicenseInfoBanner'
 import { ProductFormSummary } from '@/components/admin/product-form/ProductFormSummary'
+import { ProductR2DownloadFilesSection } from '@/components/admin/product-form/ProductR2DownloadFilesSection'
 import {
   ADMIN_PRODUCT_PRESETS,
   applyProductPreset,
   inferPresetFromForm,
   presetShowsDownloadFields,
   presetShowsLicenseFields,
+  presetShowsR2DownloadFields,
   presetShowsSaasFields,
   type AdminProductPresetId,
 } from '@/constants/adminProductPresets'
@@ -37,6 +39,11 @@ import {
 import { resolveMediaUrl } from '@/utils/mediaUrl'
 import { cn } from '@/utils/cn'
 import { SafeImage } from '@/components/ui/SafeImage'
+import {
+  buildAdminDownloadFilesFormState,
+  emptyDownloadFilesConfig,
+  resolveDownloadFilesSavePayload,
+} from '@/lib/productDownloadFiles'
 
 const emptyForm: AdminProductInput = {
   name: '',
@@ -65,6 +72,7 @@ const emptyForm: AdminProductInput = {
   downloadMediaId: null,
   coverImage: '',
   downloadUrl: '',
+  downloadFiles: emptyDownloadFilesConfig(),
 }
 
 type GalleryRow = { key: string; mediaId: string; preview: string }
@@ -189,6 +197,7 @@ export function AdminProductFormPage() {
       downloadMediaId: data.downloadMediaId,
       coverImage: data.coverImage ?? '',
       downloadUrl: data.downloadUrl ?? '',
+      downloadFiles: buildAdminDownloadFilesFormState(data.downloadFiles, data.downloadUrl),
     }
     setForm(loaded)
     setPresetId(inferPresetFromForm(loaded))
@@ -213,7 +222,9 @@ export function AdminProductFormPage() {
     )
     setUseCoverUrl(Boolean(data.coverImage && !data.coverImageMediaId))
     setSlugManual(true)
-  }, [data])
+    // Yalnızca ürün kaydı ilk yüklendiğinde hydrate et; arka plan refetch formu sıfırlamaz.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data?.id])
 
   const coverPreview = useMemo(() => {
     if (useCoverUrl && form.coverImage?.trim()) return resolveMediaUrl(form.coverImage)
@@ -244,6 +255,11 @@ export function AdminProductFormPage() {
         throw new Error(err)
       }
 
+      const downloadFilesPayload = resolveDownloadFilesSavePayload(
+        form.downloadFiles,
+        isNew ? null : data?.downloadFiles,
+      )
+
       const payload: AdminProductInput = {
         ...form,
         name: form.name.trim(),
@@ -266,6 +282,7 @@ export function AdminProductFormPage() {
         licenseMaxDevices: (presetId === 'LICENSED' || form.licenseRequired) ? form.licenseMaxDevices : null,
         coverImage: useCoverUrl ? (form.coverImage ?? '').trim() : undefined,
         downloadUrl: (form.downloadUrl ?? '').trim() || undefined,
+        ...(downloadFilesPayload !== undefined ? { downloadFiles: downloadFilesPayload } : {}),
       }
 
       if (isNew) return adminProductsService.create(payload)
@@ -298,6 +315,7 @@ export function AdminProductFormPage() {
   if (!isNew && isError) return <EmptyState title="Ürün bulunamadı" description="Kayıt yüklenemedi." />
 
   const showDownload = presetShowsDownloadFields(presetId)
+  const showR2Downloads = presetShowsR2DownloadFields(presetId)
   const showLicense = presetShowsLicenseFields(presetId)
   const showSaas = presetShowsSaasFields(presetId)
 
@@ -508,9 +526,17 @@ export function AdminProductFormPage() {
 
                   {presetId === 'FREE_TOOL' ? (
                     <HelpBox>
-                      Ücretsiz araçlarda sepete ekleme kapalıdır. İndirme bağlantısı varsa müşteri hesabından veya
-                      bilgi sayfasından yönlendirilebilir.
+                      Ücretsiz araçlarda sepete ekleme kapalıdır. R2 indirme dosyalarını aşağıdan tanımlayın; public
+                      ürün sayfasında doğrudan indirme butonları gösterilir.
                     </HelpBox>
+                  ) : null}
+
+                  {showR2Downloads ? (
+                    <ProductR2DownloadFilesSection
+                      value={form.downloadFiles ?? emptyDownloadFilesConfig()}
+                      onChange={(downloadFiles) => setForm((p) => ({ ...p, downloadFiles }))}
+                      showFreeFlags={presetId === 'FREE_TOOL' || presetId === 'DOWNLOADABLE' || presetId === 'LICENSED'}
+                    />
                   ) : null}
 
                   {showDownload ? (

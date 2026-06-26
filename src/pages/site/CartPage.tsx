@@ -13,13 +13,14 @@ import {
   writeCart,
   type CartLine,
 } from '@/lib/cartStorage'
-import { mergeCartWithPreview, type MergedCartRow } from '@/lib/cartMerge'
+import { mergeCartWithPreview, mergedRowIsSingleQuantity, type MergedCartRow } from '@/lib/cartMerge'
+import { isSaasSubscriptionProduct } from '@/utils/productPurchase'
 
 const PAGE_WRAP = 'min-h-[calc(100vh-12rem)] bg-gradient-to-b from-slate-50 via-white to-slate-50/90 pb-16 pt-8 sm:pb-20 sm:pt-10'
 const CONTAINER = 'mx-auto w-full max-w-[1160px] px-4 sm:px-6 lg:px-8'
 
-function isWebBasedRow(m: MergedCartRow): boolean {
-  return m.productType === 'SAAS' || m.productType === 'SERVICE'
+function isSaasRow(m: MergedCartRow): boolean {
+  return isSaasSubscriptionProduct(m.productType)
 }
 
 function CartLineImage({ coverImage, name }: { coverImage: string | null; name: string }) {
@@ -134,7 +135,9 @@ export function CartPage() {
         if (!cancelled) {
           setLines((prev) => {
             const aligned = alignCartLinesToCanonicalProductIds(prev, data)
-            const changed = aligned.some((l, i) => l.productId !== prev[i]?.productId)
+            const changed =
+              aligned.some((l, i) => l.productId !== prev[i]?.productId || l.quantity !== prev[i]?.quantity) ||
+              aligned.length !== prev.length
             if (changed) {
               writeCart(aligned)
               Promise.resolve().then(() => window.dispatchEvent(new Event('woontegra-cart')))
@@ -162,12 +165,13 @@ export function CartPage() {
   const currency = merged[0]?.currency || lines[0]?.snapshot?.currency || 'TRY'
   const orderTotal = grand
 
-  const hasWeb = merged.some(isWebBasedRow)
+  const hasWeb = merged.some(isSaasRow)
   const hasDesktop = merged.some((m) => m.productType === 'DOWNLOAD')
 
   const updateQty = (productId: string, q: number) => {
     const row = merged.find((x) => x.id === productId)
-    const maxQ = row && isWebBasedRow(row) ? 10 : 99
+    if (row && mergedRowIsSingleQuantity(row)) return
+    const maxQ = row && isSaasRow(row) ? 10 : 99
     setLineQuantity(productId, Math.min(maxQ, Math.max(1, q)))
     setLines(readCart())
   }
@@ -226,10 +230,11 @@ export function CartPage() {
             </h2>
             <ul className="space-y-4">
               {merged.map((m) => {
-                const web = isWebBasedRow(m)
-                const maxQ = web ? 10 : 99
+                const saas = isSaasRow(m)
+                const singleQty = mergedRowIsSingleQuantity(m)
+                const maxQ = saas ? 10 : 99
                 const period = productPricePeriodSuffix(m.productType)
-                const typeBadge = web ? 'Web tabanlı program' : 'Tek seferlik satın alma'
+                const typeBadge = saas ? 'Web tabanlı program' : 'Tek seferlik satın alma'
 
                 return (
                   <li
@@ -267,10 +272,15 @@ export function CartPage() {
                         )}
 
                         <dl className="mt-4 space-y-2 text-sm text-slate-700">
-                          {web ? (
+                          {saas ? (
                             <div>
                               <span className="font-medium text-slate-600">Kullanım süresi: </span>
                               <span className="font-semibold text-slate-900">{m.quantity} yıl</span>
+                            </div>
+                          ) : singleQty ? (
+                            <div>
+                              <span className="font-medium text-slate-600">Lisans: </span>
+                              <span className="font-semibold text-slate-900">1 lisans</span>
                             </div>
                           ) : (
                             <div>
@@ -292,19 +302,37 @@ export function CartPage() {
                         </dl>
 
                         <div className="mt-5 flex flex-col gap-4 border-t border-slate-100 pt-5 sm:flex-row sm:items-end sm:justify-between">
-                          <QuantityControl
-                            id={`qty-${m.id}`}
-                            value={m.quantity}
-                            min={1}
-                            max={maxQ}
-                            label={web ? 'Kullanım süresi (yıl)' : 'Adet'}
-                            onChange={(n) => updateQty(m.id, n)}
-                          />
-                          <p className="text-xs text-slate-500 sm:text-right">
-                            {web
-                              ? 'Her yıl için birim fiyat uygulanır; toplam otomatik hesaplanır.'
-                              : 'Adedi güncellediğinizde satır toplamı anında yenilenir.'}
-                          </p>
+                          {saas ? (
+                            <>
+                              <QuantityControl
+                                id={`qty-${m.id}`}
+                                value={m.quantity}
+                                min={1}
+                                max={maxQ}
+                                label="Kullanım süresi (yıl)"
+                                onChange={(n) => updateQty(m.id, n)}
+                              />
+                              <p className="text-xs text-slate-500 sm:text-right">
+                                Her yıl için birim fiyat uygulanır; toplam otomatik hesaplanır.
+                              </p>
+                            </>
+                          ) : singleQty ? (
+                            <p className="text-sm text-slate-600">Bu ürün tek lisans olarak teslim edilir.</p>
+                          ) : (
+                            <>
+                              <QuantityControl
+                                id={`qty-${m.id}`}
+                                value={m.quantity}
+                                min={1}
+                                max={maxQ}
+                                label="Adet"
+                                onChange={(n) => updateQty(m.id, n)}
+                              />
+                              <p className="text-xs text-slate-500 sm:text-right">
+                                Adedi güncellediğinizde satır toplamı anında yenilenir.
+                              </p>
+                            </>
+                          )}
                         </div>
                       </div>
                     </div>

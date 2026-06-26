@@ -1,3 +1,12 @@
+import {
+  hasConfiguredDownloadFiles,
+  normalizeDownloadFilesConfig,
+  type ProductDownloadFileEntry,
+  type ProductDownloadFilesConfig,
+} from '@/lib/productDownloadFiles'
+
+export type { ProductDownloadFileEntry, ProductDownloadFilesConfig }
+
 export type ProductType = 'DOWNLOAD' | 'SAAS' | 'SERVICE'
 
 export type ProductCategoryBrief = {
@@ -41,6 +50,17 @@ export type PublicProductDetail = PublicProductListItem & {
   licenseDays: number | null
   licenseMaxDevices: number | null
   hasDownload: boolean
+  publicDownloadFiles?: PublicProductDownloadFile[]
+}
+
+export type PublicProductDownloadFile = {
+  label: string
+  downloadPath: string
+  filename: string
+  version?: string
+  size?: string
+  type?: 'setup' | 'portable' | 'other'
+  buttonLabel?: string
 }
 
 export type AdminProductGalleryImage = {
@@ -85,6 +105,7 @@ export type AdminProduct = {
   coverMedia: { id: string; url: string; fileType: string } | null
   downloadMedia: { id: string; url: string; fileType: string; originalName: string; fileSize: number } | null
   galleryImages: AdminProductGalleryImage[]
+  downloadFiles?: ProductDownloadFilesConfig | null
   createdAt: string
   updatedAt: string
   deliveryLinkMissing?: boolean
@@ -118,6 +139,7 @@ export type AdminProductInput = {
   coverImageMediaId?: string | null
   downloadMediaId?: string | null
   galleryMediaIds?: string[]
+  downloadFiles?: ProductDownloadFilesConfig | null
 }
 
 export type AdminProductListParams = {
@@ -241,7 +263,34 @@ export function normalizePublicDetail(raw: unknown): PublicProductDetail | null 
     licenseDays: toNullableNumber(row.licenseDays),
     licenseMaxDevices: toNullableNumber(row.licenseMaxDevices),
     hasDownload: toBool(row.hasDownload, false),
+    publicDownloadFiles: normalizePublicDownloadFiles(row.publicDownloadFiles),
   }
+}
+
+function normalizePublicDownloadFiles(raw: unknown): PublicProductDownloadFile[] | undefined {
+  if (!Array.isArray(raw) || raw.length === 0) return undefined
+  const files: PublicProductDownloadFile[] = []
+  for (const item of raw) {
+    if (!item || typeof item !== 'object') continue
+    const row = item as Record<string, unknown>
+    const downloadPath = toString(row.downloadPath)
+    const label = toString(row.label)
+    const filename = toString(row.filename, 'download.exe')
+    if (!downloadPath || !label) continue
+    const typeRaw = row.type
+    const type =
+      typeRaw === 'setup' || typeRaw === 'portable' || typeRaw === 'other' ? typeRaw : undefined
+    files.push({
+      label,
+      downloadPath,
+      filename,
+      version: row.version == null ? undefined : toString(row.version),
+      size: row.size == null ? undefined : toString(row.size),
+      type,
+      buttonLabel: row.buttonLabel == null ? undefined : toString(row.buttonLabel),
+    })
+  }
+  return files.length > 0 ? files : undefined
 }
 
 export function normalizeAdminProduct(raw: unknown): AdminProduct | null {
@@ -323,6 +372,7 @@ export function normalizeAdminProduct(raw: unknown): AdminProduct | null {
       }
     })(),
     galleryImages,
+    downloadFiles: row.downloadFiles == null ? null : normalizeAdminDownloadFiles(row.downloadFiles),
     createdAt: toString(row.createdAt),
     updatedAt: toString(row.updatedAt),
     deliveryLinkMissing: toBool(row.deliveryLinkMissing, false),
@@ -332,6 +382,13 @@ export function normalizeAdminProduct(raw: unknown): AdminProduct | null {
 export function normalizeAdminList(raw: unknown): AdminProduct[] {
   if (!Array.isArray(raw)) return []
   return raw.map(normalizeAdminProduct).filter((x): x is AdminProduct => x !== null)
+}
+
+function normalizeAdminDownloadFiles(raw: unknown): ProductDownloadFilesConfig | null {
+  if (!raw || typeof raw !== 'object') return null
+  const normalized = normalizeDownloadFilesConfig(raw)
+  if (!hasConfiguredDownloadFiles(normalized) && !normalized.version?.trim()) return null
+  return normalized
 }
 
 export function slugifySoftwareName(name: string): string {
