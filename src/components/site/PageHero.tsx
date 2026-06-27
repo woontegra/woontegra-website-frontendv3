@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { SafeImage } from '@/components/ui/SafeImage'
 import { cn } from '@/utils/cn'
+import { pickPageHeroImage } from '@/lib/publicContentImages'
 import { isValidImageSrc } from '@/lib/resolveImageUrl'
 
 export const INNER_PAGE_HERO_CLASS = 'min-h-[320px] py-16 md:min-h-[360px] md:py-20 lg:py-24'
@@ -47,7 +48,8 @@ export function PageHero({
   className,
 }: Props) {
   const isDark = variant === 'dark'
-  const showImage = Boolean(rightContent || (image && isValidImageSrc(image)))
+  const resolvedImage = image ? pickPageHeroImage({ heroImage: image }) : ''
+  const showImage = Boolean(rightContent || (resolvedImage && isValidImageSrc(resolvedImage)))
 
   return (
     <section
@@ -162,10 +164,9 @@ export function PageHero({
                     )}
                   >
                     <SafeImage
-                      src={image}
+                      src={resolvedImage}
                       alt={imageAlt}
                       loading="eager"
-                      placeholder
                       wrapperClassName="rounded-xl"
                       aspectRatio="aspect-[4/3]"
                     />

@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Card, CardBody } from '@/components/ui/Card'
 import { SafeImage } from '@/components/ui/SafeImage'
+import { pickProductCoverUrl } from '@/lib/publicContentImages'
 import { addToCart } from '@/lib/cartStorage'
 import { formatMoney, hasCompareDiscount } from '@/utils/formatMoney'
 import {
@@ -35,6 +36,7 @@ export function ProductCard({ product }: Props) {
   const showQuote = shouldShowQuoteCta(product)
   const licenseNote = licenseListNote(product)
   const detailHref = `/yazilimlar/${product.slug}`
+  const coverUrl = pickProductCoverUrl(product)
   const teklifHref = `/iletisim?konu=${encodeURIComponent(`Teklif: ${product.name}`)}`
   const hasPrice = Number.isFinite(product.price) && product.price > 0
   const showFreeLabel = isFreeDownload
@@ -64,15 +66,15 @@ export function ProductCard({ product }: Props) {
     <Card className="group flex h-full flex-col overflow-hidden border-slate-200/80 transition hover:border-brand-200 hover:shadow-lg">
       <Link to={detailHref} className="block">
         <div className="aspect-[4/3] overflow-hidden bg-gradient-to-br from-slate-100 to-slate-50">
-          <SafeImage
-            src={product.coverImage}
-            alt={product.name}
-            className="transition duration-500 group-hover:scale-[1.03]"
-            aspectRatio="aspect-[4/3]"
-            productPlaceholder
-            placeholder
-            loading="lazy"
-          />
+          {coverUrl ? (
+            <SafeImage
+              src={coverUrl}
+              alt={product.name}
+              className="transition duration-500 group-hover:scale-[1.03]"
+              aspectRatio="aspect-[4/3]"
+              loading="lazy"
+            />
+          ) : null}
         </div>
       </Link>
 

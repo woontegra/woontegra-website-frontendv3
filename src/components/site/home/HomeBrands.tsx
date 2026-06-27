@@ -1,6 +1,7 @@
 import { useRef } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { SafeImage } from '@/components/ui/SafeImage'
+import { pickBrandImageUrl } from '@/lib/publicContentImages'
 import { enabledBrands, type HomePageContent } from '@/types/homePageContent'
 
 type Props = { brands: HomePageContent['brands'] }
@@ -32,7 +33,9 @@ export function HomeBrands({ brands }: Props) {
           </button>
 
           <div ref={scrollRef} className="flex snap-x snap-mandatory gap-6 overflow-x-auto px-2 pb-8 scrollbar-hide">
-            {cards.map((brand) => (
+            {cards.map((brand) => {
+              const brandImage = pickBrandImageUrl(brand)
+              return (
               <a
                 key={brand.id}
                 href={brand.url}
@@ -41,14 +44,15 @@ export function HomeBrands({ brands }: Props) {
                 className="group relative w-[calc(33.333%-16px)] min-w-[300px] flex-shrink-0 snap-start cursor-pointer overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl"
               >
                 <div className="relative h-72 overflow-hidden bg-slate-100">
-                  <SafeImage
-                    src={brand.image}
-                    alt={brand.name}
-                    aspectRatio="aspect-auto h-72"
-                    placeholder
-                    loading="lazy"
-                    wrapperClassName="h-full"
-                  />
+                  {brandImage ? (
+                    <SafeImage
+                      src={brandImage}
+                      alt={brand.name}
+                      aspectRatio="aspect-auto h-72"
+                      loading="lazy"
+                      wrapperClassName="h-full"
+                    />
+                  ) : null}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
                 </div>
                 <div className="p-6">
@@ -56,7 +60,7 @@ export function HomeBrands({ brands }: Props) {
                   <p className="text-base text-slate-600">{brand.text}</p>
                 </div>
               </a>
-            ))}
+            )})}
           </div>
 
           <button

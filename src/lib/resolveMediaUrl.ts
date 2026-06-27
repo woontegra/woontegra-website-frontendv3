@@ -87,9 +87,18 @@ function defaultPlaceholder(options?: ResolveMediaUrlOptions): string {
   return MEDIA_PLACEHOLDER
 }
 
+function hasExplicitUploadsBase(): boolean {
+  return Boolean(
+    import.meta.env.VITE_UPLOADS_BASE_URL?.trim() || import.meta.env.VITE_BACKEND_PUBLIC_URL?.trim(),
+  )
+}
+
 function resolveUploadsPath(relativePath: string): string {
-  const base = getUploadsBase()
   const pathPart = encodeUriPathSegments(relativePath.startsWith('/') ? relativePath : `/${relativePath}`)
+  // Vercel/Vite proxy: göreli /uploads/... aynı origin üzerinden Railway'e yönlenir (308/redirect sorunlarını azaltır).
+  if (!hasExplicitUploadsBase()) return pathPart
+
+  const base = getUploadsBase()
   if (!base) return pathPart
   return `${base.replace(/\/+$/, '')}${pathPart}`
 }

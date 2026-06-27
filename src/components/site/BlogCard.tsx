@@ -10,6 +10,7 @@ import { Card, CardBody } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 
 import { SafeImage } from '@/components/ui/SafeImage'
+import { pickBlogCoverUrl } from '@/lib/publicContentImages'
 
 
 
@@ -25,6 +26,7 @@ type Props = {
 
 export function BlogCard({ post, compact = false }: Props) {
   const readingMinutes = estimateReadingTimeMinutes(post.bodyHtml || post.excerpt)
+  const coverUrl = pickBlogCoverUrl(post)
 
   return (
 
@@ -33,13 +35,14 @@ export function BlogCard({ post, compact = false }: Props) {
       <Link to={`/blog/${post.slug}`} className="block">
 
         <div className={`overflow-hidden bg-slate-100 ${compact ? 'aspect-[16/9]' : 'aspect-[16/10]'}`}>
-          <SafeImage
-            src={post.featuredImage}
-            alt={post.title}
-            aspectRatio={compact ? 'aspect-[16/9]' : 'aspect-[16/10]'}
-            placeholder
-            loading="lazy"
-          />
+          {coverUrl ? (
+            <SafeImage
+              src={coverUrl}
+              alt={post.title}
+              aspectRatio={compact ? 'aspect-[16/9]' : 'aspect-[16/10]'}
+              loading="lazy"
+            />
+          ) : null}
         </div>
 
       </Link>

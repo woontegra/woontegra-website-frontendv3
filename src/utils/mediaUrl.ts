@@ -1,4 +1,5 @@
 import { DEFAULT_LOGO_PATH, resolveMediaUrl as resolveCoreMediaUrl } from '@/lib/resolveMediaUrl'
+import { pickProductCoverUrl } from '@/lib/publicContentImages'
 import { DEFAULT_HEADER_LOGO_PATH } from '@/data/siteLogo'
 
 export {
@@ -27,9 +28,9 @@ export function productCoverUrl(product: {
   coverImage?: string | null
   image?: string | null
   coverUrl?: string | null
+  coverMedia?: { url?: string | null } | null
 }): string {
-  const raw = product.coverImage || product.coverUrl || product.image
-  return resolveCatalogCoverUrl(raw)
+  return pickProductCoverUrl(product)
 }
 
 export function buildBrandedAssetUrl(path: string, logoUpdatedAt?: string): string {

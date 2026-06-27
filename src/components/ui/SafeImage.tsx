@@ -75,6 +75,7 @@ export function SafeImage({
 
   if (failed || !activeSrc) {
     onHidden?.()
+    if (!placeholder) return null
     return (
       <div
         className={cn(
